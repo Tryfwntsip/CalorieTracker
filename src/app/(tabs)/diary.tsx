@@ -1,9 +1,5 @@
-import { Screen, ComingSoon } from '@/ui/components';
+import { DiaryScreen } from '@/features/diary/DiaryScreen';
 
 export default function DiaryRoute() {
-  return (
-    <Screen>
-      <ComingSoon milestone={3} />
-    </Screen>
-  );
+  return <DiaryScreen mode="diary" />;
 }

@@ -35,6 +35,7 @@ Status: Phase 1. Binding minimums; every milestone's acceptance criteria include
 - **Energy/macros:** Mifflin–St Jeor across sex/age/height/weight matrix incl. 'unspecified' averaging; activity multipliers; weekly-rate→daily delta; macro splits & protein floor; weekday overrides resolution.
 - **Guardrails:** boundary tests at 1,199/1,200/1,500 kcal; 1.5% weekly loss; BMI 17/18.5 goal edges; confirmation-required band.
 - **Profile persistence:** M2→M3 migration snapshots existing goals; create/update appends versions transactionally; service tests prove UI confirmation cannot bypass blocked targets.
+- **Diary:** consumed/burned/remaining and macro totals ignore tombstones; weekday overrides resolve by local day key; M3→M4 migration preserves entries; copy, soft-delete/restore, meal-section changes, exercise, and steps use real SQLite integration tests.
 - **Food score:** reference table of ~20 foods (e.g. lentils, olive oil, feta, soft drink, whole bread) with hand-computed expected scores and top factors; monotonicity tests (more fiber never lowers score, ceteris paribus); "not enough data" cases.
 - **Nutrient normalization:** per-provider mapper fixtures incl. kJ-only products, sodium↔salt, missing→null (never 0), per-serving→per-100g conversion.
 - **Units/portions:** g/ml/serving/piece/tsp/tbsp round-trips; liquid vs solid.

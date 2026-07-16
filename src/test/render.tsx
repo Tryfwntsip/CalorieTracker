@@ -2,6 +2,7 @@ import { render } from '@testing-library/react-native';
 import type { ReactElement } from 'react';
 import { createInstance } from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { DatabaseContext } from '@/db/DatabaseProvider';
 import type { Database } from '@/db/types';
@@ -49,7 +50,14 @@ export function renderWithProviders(ui: ReactElement, options: RenderOptions = {
 
   return render(
     <I18nextProvider i18n={testI18n}>
-      <ThemeProvider>{content}</ThemeProvider>
+      <SafeAreaProvider
+        initialMetrics={{
+          frame: { x: 0, y: 0, width: 390, height: 844 },
+          insets: { top: 0, right: 0, bottom: 0, left: 0 },
+        }}
+      >
+        <ThemeProvider>{content}</ThemeProvider>
+      </SafeAreaProvider>
     </I18nextProvider>,
   );
 }

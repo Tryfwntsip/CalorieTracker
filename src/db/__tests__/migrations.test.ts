@@ -17,6 +17,9 @@ const requiredTables = [
   'scanned_products',
   'barcode_scan_history',
   'profile_goal_history',
+  'meal_sections',
+  'exercise_logs',
+  'steps_logs',
 ];
 
 const requiredIndexes = [
@@ -29,6 +32,12 @@ const requiredIndexes = [
   'idx_water_day',
   'idx_scan_history_time',
   'idx_profile_goal_history_effective',
+  'idx_meal_sections_position',
+  'idx_entries_day_section',
+  'idx_exercise_day',
+  'idx_exercise_external_uid',
+  'idx_steps_day',
+  'idx_steps_external_uid',
 ];
 
 describe('SQLite initialization and migrations', () => {
@@ -178,10 +187,72 @@ describe('SQLite initialization and migrations', () => {
     expect(history).toEqual({ calorie_target: 2100, effective_at: timestamp });
   });
 
+  it('upgrades M3 diary entries without losing data and links default meal sections', async () => {
+    await initializeDatabase(database, migrations.slice(0, 2));
+    const timestamp = '2026-07-16T08:00:00.000Z';
+    await database.runAsync(
+      `INSERT INTO diary_days (date, mood, note, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?)`,
+      '2026-07-16',
+      4,
+      'Kept',
+      timestamp,
+      timestamp,
+    );
+    await database.runAsync(
+      `INSERT INTO diary_entries (
+        id, day_date, section, custom_label, quantity, unit, energy_kcal,
+        logged_via, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      'entry',
+      '2026-07-16',
+      'breakfast',
+      'Toast',
+      1,
+      'serving',
+      250,
+      'manual',
+      timestamp,
+      timestamp,
+    );
+
+    await initializeDatabase(database, migrations);
+
+    await expect(
+      database.getFirstAsync<{ custom_label: string; section: string }>(
+        'SELECT custom_label, section FROM diary_entries WHERE id = ?',
+        'entry',
+      ),
+    ).resolves.toEqual({ custom_label: 'Toast', section: 'breakfast' });
+    await expect(
+      database.getFirstAsync<{ name: string }>(
+        'SELECT name FROM meal_sections WHERE id = ?',
+        'breakfast',
+      ),
+    ).resolves.toEqual({ name: 'Breakfast' });
+    await expect(
+      database.runAsync(
+        `INSERT INTO diary_entries (
+          id, day_date, section, custom_label, quantity, unit, logged_via,
+          created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        'invalid-section',
+        '2026-07-16',
+        'missing',
+        'Food',
+        1,
+        'serving',
+        'manual',
+        timestamp,
+        timestamp,
+      ),
+    ).rejects.toThrow();
+  });
+
   it('rolls back a failing migration and preserves the prior version', async () => {
     await initializeDatabase(database, migrations);
     const failing: Migration = {
-      version: 3,
+      version: 4,
       name: 'deliberate_failure',
       up: async (transaction) => {
         await transaction.execAsync(`
@@ -193,7 +264,7 @@ describe('SQLite initialization and migrations', () => {
 
     await expect(initializeDatabase(database, [...migrations, failing])).rejects.toMatchObject({
       code: 'migration_failed',
-      migrationVersion: 3,
+      migrationVersion: 4,
     } satisfies Partial<DatabaseInitializationError>);
 
     await expect(getUserVersion(database)).resolves.toBe(latestMigrationVersion);

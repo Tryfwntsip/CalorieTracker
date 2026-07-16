@@ -1,0 +1,60 @@
+import { act, fireEvent, screen } from '@testing-library/react-native';
+
+import { initializeDatabase } from '@/db/initialize';
+import { DiaryScreen } from '@/features/diary/DiaryScreen';
+import { createSettingsRepository, defaultSettings } from '@/repositories';
+import { renderWithProviders } from '@/test/render';
+import { createTestDatabase, type TestDatabase } from '@/test/sqlite';
+import type { Profile } from '@/types';
+
+jest.mock('expo-router', () => {
+  const React = jest.requireActual<typeof import('react')>('react');
+  return {
+    useFocusEffect: (callback: () => void) => React.useEffect(callback, [callback]),
+  };
+});
+
+const profile: Profile = {
+  id: 1,
+  dateOfBirth: '1990-05-12',
+  sex: 'unspecified',
+  heightCm: 175,
+  currentWeightKg: 75,
+  targetWeightKg: 70,
+  activityLevel: 3,
+  goalType: 'maintain',
+  weeklyRateKg: 0,
+  calorieTarget: 2200,
+  proteinTargetG: 110,
+  carbsTargetG: 260,
+  fatTargetG: 73,
+  createdAt: '2026-07-16T08:00:00.000Z',
+  updatedAt: '2026-07-16T08:00:00.000Z',
+};
+
+describe('DiaryScreen', () => {
+  let database: TestDatabase;
+
+  beforeEach(async () => {
+    database = createTestDatabase();
+    await initializeDatabase(database);
+    await createSettingsRepository(database).create(defaultSettings);
+  });
+
+  afterEach(() => database.close());
+
+  it('quick-adds a manual food and updates the diary', async () => {
+    await renderWithProviders(<DiaryScreen mode="today" />, { database, profile });
+    await screen.findByText('Daily details');
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Quick add food' }));
+    await fireEvent.changeText(screen.getByLabelText('Label (optional)'), 'Yogurt');
+    await fireEvent.changeText(screen.getByLabelText('Calories (kcal)'), '180');
+    await act(async () => {
+      await fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+    });
+
+    expect(await screen.findByText('Yogurt')).toBeTruthy();
+    expect(screen.getAllByText('180 kcal').length).toBeGreaterThan(0);
+  });
+});

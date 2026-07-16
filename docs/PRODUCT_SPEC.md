@@ -49,7 +49,7 @@ Profile is editable at any time; goal changes are **versioned** (history kept) s
 - BMR: Mifflin–St Jeor. Activity multipliers: 1.2 / 1.375 / 1.55 / 1.725 / 1.9.
 - Goal adjustment: 1 kg body mass ≈ 7,700 kcal; daily delta = signed weeklyRateKg × 7700 / 7. The UI accepts a positive pace; loss is persisted negative, gain/build-muscle positive, and maintenance zero.
 - Macro defaults: protein 1.6 / 1.4 / 1.6 / 1.8 g/kg for lose / maintain / gain / build-muscle, fat 30% of target calories, and carbohydrates use the remaining calories. Values are user-adjustable before save; all must be non-negative and the protein floor is 0.8 g/kg.
-- Per-weekday overrides: users may set different calorie targets for selected weekdays (e.g. training days). Stored as goal rows; diary always shows the target effective for that date.
+- Per-weekday overrides: users may set different calorie targets for selected weekdays (e.g. training days). Stored in local settings by weekday; diary combines the override with the versioned profile goal effective for that date.
 - All formulas are pure functions with table-driven tests; documented in code with sources.
 
 ## 6. Diary (F3)
@@ -75,7 +75,7 @@ Portions: g, ml, serving, piece, teaspoon (5 ml), tablespoon (15 ml), plus provi
 
 Nutrient panel (when data exists): energy, protein, carbs, fat, saturated fat, monounsaturated fat, polyunsaturated fat, fiber, sugar, salt & sodium, cholesterol, vitamins (A, C, D, E, K, B1, B2, B3, B6, B9, B12), minerals (calcium, iron, magnesium, potassium, zinc, phosphorus, selenium, iodine). Missing values display as "—", never as 0.
 
-Canonical nutrient model: all providers map into one normalized structure per 100 g/ml (see DATA_MODEL §4). Every food records source, external ID, last sync date, and a data-quality level (verified / complete / partial / user-entered). Conflicting sources are **never merged silently**: the app shows which source is used and lets the user pick another match or correct values (corrections stored as user overrides, original preserved).
+Canonical nutrient model: all providers map into one normalized structure per 100 g/ml (see DATA_MODEL §6). Every food records source, external ID, last sync date, and a data-quality level (verified / complete / partial / user-entered). Conflicting sources are **never merged silently**: the app shows which source is used and lets the user pick another match or correct values (corrections stored as user overrides, original preserved).
 
 Offline: the entire local catalog (Greek DB, custom foods, anything previously looked up) is loggable offline — always.
 

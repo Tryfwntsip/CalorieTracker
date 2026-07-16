@@ -5,7 +5,7 @@ import { typography, type TypographyToken } from '@/ui/tokens';
 
 type Props = TextProps & {
   variant?: TypographyToken;
-  color?: 'primary' | 'secondary' | 'disabled' | 'accent' | 'danger' | 'onPrimary';
+  color?: 'primary' | 'secondary' | 'disabled' | 'accent' | 'warning' | 'danger' | 'onPrimary';
 };
 
 export function AppText({ variant = 'body', color = 'primary', style, ...rest }: Props) {
@@ -15,6 +15,7 @@ export function AppText({ variant = 'body', color = 'primary', style, ...rest }:
     secondary: colors.textSecondary,
     disabled: colors.textDisabled,
     accent: colors.primary,
+    warning: colors.warning,
     danger: colors.danger,
     onPrimary: colors.onPrimary,
   }[color];

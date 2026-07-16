@@ -8,19 +8,19 @@ The device's **SQLite database is the primary and authoritative store**. There i
 
 ## 2. Stack
 
-| Concern                  | Choice                                                                | Why                                                        |
-| ------------------------ | --------------------------------------------------------------------- | ---------------------------------------------------------- |
-| App framework            | React Native + **Expo** SDK 57 (dev builds)                           | single codebase iOS/Android; camera/health need dev builds |
-| Language                 | TypeScript, `strict: true`                                            | mandated                                                   |
-| Routing                  | **Expo Router** (file-based, typed)                                   | mandated                                                   |
-| Database                 | **expo-sqlite** — versioned migrations, FK ON                         | authoritative store; queryable, offline, fast              |
-| Validation               | **Zod** at all boundaries (DB rows, API responses, forms)             | mandated                                                   |
-| Async/server-state cache | TanStack Query (introduced in M4 when the diary needs it)             | caching/invalidation around repository calls               |
-| UI state                 | Component state / small Zustand slices if needed                      | minimal                                                    |
-| i18n                     | i18next + expo-localization                                           | en/el                                                      |
-| Charts                   | Victory Native or equivalent (final pick M7)                          | perf on long histories                                     |
-| Testing                  | Jest (jest-expo) + RNTL + real SQLite integration tests + Maestro E2E | see TEST_STRATEGY                                          |
-| Lint/format              | ESLint (zero warnings) + Prettier                                     | CI gate                                                    |
+| Concern           | Choice                                                                | Why                                                         |
+| ----------------- | --------------------------------------------------------------------- | ----------------------------------------------------------- |
+| App framework     | React Native + **Expo** SDK 57 (dev builds)                           | single codebase iOS/Android; camera/health need dev builds  |
+| Language          | TypeScript, `strict: true`                                            | mandated                                                    |
+| Routing           | **Expo Router** (file-based, typed)                                   | mandated                                                    |
+| Database          | **expo-sqlite** — versioned migrations, FK ON                         | authoritative store; queryable, offline, fast               |
+| Validation        | **Zod** at all boundaries (DB rows, API responses, forms)             | mandated                                                    |
+| Local async state | Feature hooks over repositories; explicit reload after local writes   | small, offline-only data sets; no server cache to reconcile |
+| UI state          | Component state / small Zustand slices if needed                      | minimal                                                     |
+| i18n              | i18next + expo-localization                                           | en/el                                                       |
+| Charts            | Victory Native or equivalent (final pick M7)                          | perf on long histories                                      |
+| Testing           | Jest (jest-expo) + RNTL + real SQLite integration tests + Maestro E2E | see TEST_STRATEGY                                           |
+| Lint/format       | ESLint (zero warnings) + Prettier                                     | CI gate                                                     |
 
 Every new dependency needs a written justification (AGENTS.md rule 11).
 
@@ -80,6 +80,9 @@ src/app routes → src/features → src/services + src/repositories → src/doma
 - `ProfileProvider` loads the singleton profile after database initialization. Route guards show onboarding until the profile exists and expose the five-tab shell only after a valid, guarded target is saved.
 - Goal calculations and safety rules are pure functions under `src/domain/goals`; `src/services/profile.ts` re-runs all validation and guardrails before persistence, so screens cannot bypass a blocked or unconfirmed target.
 - Every saved profile target appends a `profile_goal_history` version in the same SQLite transaction as the current-profile update.
+- M4's Today and Diary screens share one repository-backed feature hook. Writes explicitly reload the selected local day; no server-state dependency was added because SQLite is authoritative and the diary has no remote cache to reconcile.
+- Meal sections are rows, not settings JSON: this permits stable foreign keys, localized names, ordering, and visibility. The M4 migration rebuilds `diary_entries` without data loss and replaces its fixed section enum with a `meal_sections` reference.
+- Diary entry deletion first writes a six-second tombstone (`deleted_at`); undo clears it. Other append-only manual records are recreated from their validated in-memory snapshot during the same undo window.
 
 ### Integration-test runtime
 
@@ -133,3 +136,4 @@ Dev: Expo dev tools + `src/lib/logger` (leveled, redacting). **No third-party cr
 | D8  | App name/branding                                                                        | Deferred                                                  |
 | D9  | Personal use only: no accounts/auth/cloud/subscriptions/ads/telemetry/store distribution | Accepted                                                  |
 | D10 | OFF called directly (keyless); USDA deferred; vision key user-supplied at runtime        | Accepted                                                  |
+| D11 | Repository-backed feature hooks instead of a server-state cache for the local-only diary | Accepted (M4; avoids an unnecessary dependency)           |

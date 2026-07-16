@@ -20,7 +20,7 @@ export const diaryEntrySchema = z
   .object({
     id: z.string().min(1),
     dayDate: dayKeySchema,
-    section: z.enum(['breakfast', 'morning_snack', 'lunch', 'afternoon_snack', 'dinner', 'extra']),
+    section: z.string().min(1),
     foodId: z.string().nullable(),
     customLabel: z.string().nullable(),
     quantity: z.number().positive(),
@@ -52,3 +52,36 @@ export const diaryEntrySchema = z
   .refine((entry) => entry.foodId !== null || Boolean(entry.customLabel?.trim()), {
     message: 'An entry requires a food or custom label.',
   });
+
+export const mealSectionSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().trim().min(1),
+  nameEl: z.string().nullable(),
+  position: z.number().int().nonnegative(),
+  isHidden: z.union([z.literal(0), z.literal(1)]).transform((value) => value === 1),
+  isDefault: z.union([z.literal(0), z.literal(1)]).transform((value) => value === 1),
+  createdAt: isoTimestampSchema,
+  updatedAt: isoTimestampSchema,
+});
+
+export const exerciseLogSchema = z.object({
+  id: z.string().min(1),
+  dayDate: dayKeySchema,
+  activityType: z.string().trim().min(1),
+  durationMinutes: z.number().int().nonnegative(),
+  energyKcal: z.number().nonnegative(),
+  origin: z.enum(['manual', 'healthkit', 'health_connect']),
+  externalUid: z.string().nullable(),
+  createdAt: isoTimestampSchema,
+  updatedAt: isoTimestampSchema,
+});
+
+export const stepsLogSchema = z.object({
+  id: z.string().min(1),
+  dayDate: dayKeySchema,
+  steps: z.number().int().nonnegative(),
+  origin: z.enum(['manual', 'healthkit', 'health_connect']),
+  externalUid: z.string().nullable(),
+  createdAt: isoTimestampSchema,
+  updatedAt: isoTimestampSchema,
+});

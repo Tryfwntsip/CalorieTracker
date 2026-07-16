@@ -21,6 +21,8 @@ FROM diary_entries
 
 export interface DiaryRepository {
   getDay(date: string): Promise<DiaryDay | null>;
+  ensureDay(date: string): Promise<DiaryDay>;
+  saveDay(day: DiaryDayWrite): Promise<DiaryDay>;
   createDay(day: DiaryDayWrite): Promise<DiaryDay>;
   updateDay(day: DiaryDayWrite): Promise<DiaryDay>;
   deleteDay(date: string): Promise<void>;
@@ -28,6 +30,14 @@ export interface DiaryRepository {
   listEntries(dayDate: string): Promise<DiaryEntry[]>;
   createEntry(entry: DiaryEntryWrite): Promise<DiaryEntry>;
   updateEntry(entry: DiaryEntryWrite): Promise<DiaryEntry>;
+  softDeleteEntry(id: string): Promise<DiaryEntry>;
+  restoreEntry(id: string): Promise<DiaryEntry>;
+  copyEntries(
+    sourceDate: string,
+    targetDate: string,
+    section: string | null,
+    newIds: readonly string[],
+  ): Promise<number>;
   deleteEntry(id: string): Promise<void>;
 }
 
@@ -75,8 +85,49 @@ export function createDiaryRepository(
       entry.deletedAt,
     ] as const;
 
+  const ensureDay = async (date: string): Promise<DiaryDay> => {
+    try {
+      const now = clock.now();
+      await database.runAsync(
+        `INSERT INTO diary_days (date, mood, note, created_at, updated_at)
+         VALUES (?, NULL, NULL, ?, ?)
+         ON CONFLICT(date) DO NOTHING`,
+        date,
+        now,
+        now,
+      );
+      const day = await getDay(date);
+      if (!day) throw new Error('Diary day was not found.');
+      return day;
+    } catch (error: unknown) {
+      throw mapRepositoryError(error, 'diary_day');
+    }
+  };
+
   return {
     getDay,
+    ensureDay,
+    async saveDay(day) {
+      try {
+        const now = clock.now();
+        await database.runAsync(
+          `INSERT INTO diary_days (date, mood, note, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(date) DO UPDATE SET
+             mood = excluded.mood, note = excluded.note, updated_at = excluded.updated_at`,
+          day.date,
+          day.mood,
+          day.note,
+          now,
+          now,
+        );
+        const saved = await getDay(day.date);
+        if (!saved) throw new Error('Saved diary day was not found.');
+        return saved;
+      } catch (error: unknown) {
+        throw mapRepositoryError(error, 'diary_day');
+      }
+    },
     async createDay(day) {
       try {
         const now = clock.now();
@@ -135,6 +186,7 @@ export function createDiaryRepository(
     },
     async createEntry(entry) {
       try {
+        await ensureDay(entry.dayDate);
         const now = clock.now();
         await database.runAsync(
           `INSERT INTO diary_entries (
@@ -171,6 +223,114 @@ export function createDiaryRepository(
         const updated = await getEntry(entry.id);
         if (!updated) throw new Error('Updated diary entry was not found.');
         return updated;
+      } catch (error: unknown) {
+        throw mapRepositoryError(error, 'diary_entry');
+      }
+    },
+    async softDeleteEntry(id) {
+      try {
+        const now = clock.now();
+        const result = await database.runAsync(
+          'UPDATE diary_entries SET deleted_at = ?, updated_at = ? WHERE id = ?',
+          now,
+          now,
+          id,
+        );
+        assertChanged(result.changes, 'diary_entry');
+        const deleted = await getEntry(id);
+        if (!deleted) throw new Error('Deleted diary entry was not found.');
+        return deleted;
+      } catch (error: unknown) {
+        throw mapRepositoryError(error, 'diary_entry');
+      }
+    },
+    async restoreEntry(id) {
+      try {
+        const result = await database.runAsync(
+          'UPDATE diary_entries SET deleted_at = NULL, updated_at = ? WHERE id = ?',
+          clock.now(),
+          id,
+        );
+        assertChanged(result.changes, 'diary_entry');
+        const restored = await getEntry(id);
+        if (!restored) throw new Error('Restored diary entry was not found.');
+        return restored;
+      } catch (error: unknown) {
+        throw mapRepositoryError(error, 'diary_entry');
+      }
+    },
+    async copyEntries(sourceDate, targetDate, section, newIds) {
+      try {
+        const sourceEntries = await database.getAllAsync<DiaryEntry>(
+          `${selectEntry}
+           WHERE day_date = ? AND deleted_at IS NULL
+             AND (? IS NULL OR section = ?)
+           ORDER BY created_at, id`,
+          sourceDate,
+          section,
+          section,
+        );
+        if (sourceEntries.length !== newIds.length) {
+          throw new Error('A new ID is required for each copied diary entry.');
+        }
+        if (sourceEntries.length === 0) return 0;
+        const now = clock.now();
+        await database.withTransactionAsync(async (transaction) => {
+          await transaction.runAsync(
+            `INSERT INTO diary_days (date, mood, note, created_at, updated_at)
+             VALUES (?, NULL, NULL, ?, ?)
+             ON CONFLICT(date) DO NOTHING`,
+            targetDate,
+            now,
+            now,
+          );
+          for (const [index, row] of sourceEntries.entries()) {
+            const entry = parseRecord(diaryEntrySchema, row, 'diary_entry');
+            await transaction.runAsync(
+              `INSERT INTO diary_entries (
+                id, day_date, section, food_id, custom_label, quantity, unit, grams_resolved,
+                energy_kcal, protein_g, carbs_g, fat_g, sat_fat_g, fiber_g, sugar_g,
+                sodium_mg, micros_snapshot_json, logged_via, deleted_at, created_at, updated_at
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)`,
+              newIds[index]!,
+              targetDate,
+              entry.section,
+              entry.foodId,
+              entry.customLabel,
+              entry.quantity,
+              entry.unit,
+              entry.gramsResolved,
+              entry.energyKcal,
+              entry.proteinG,
+              entry.carbsG,
+              entry.fatG,
+              entry.satFatG,
+              entry.fiberG,
+              entry.sugarG,
+              entry.sodiumMg,
+              encodeJson(entry.microsSnapshot),
+              entry.loggedVia,
+              now,
+              now,
+            );
+          }
+          if (section === null) {
+            const sourceDay = await transaction.getFirstAsync<{
+              mood: number | null;
+              note: string | null;
+            }>('SELECT mood, note FROM diary_days WHERE date = ?', sourceDate);
+            if (sourceDay) {
+              await transaction.runAsync(
+                'UPDATE diary_days SET mood = ?, note = ?, updated_at = ? WHERE date = ?',
+                sourceDay.mood,
+                sourceDay.note,
+                now,
+                targetDate,
+              );
+            }
+          }
+        });
+        return sourceEntries.length;
       } catch (error: unknown) {
         throw mapRepositoryError(error, 'diary_entry');
       }

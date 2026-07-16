@@ -45,7 +45,8 @@ npm test
 - ✅ M1 — Foundation & design system (tokens, themes, i18n en/el, UI kit, 5-tab shell)
 - ✅ M2 — Local SQLite foundation (migrations, repositories, core tables, dev seeds)
 - ✅ M3 — Personal profile and guarded calorie/macro targets
-- ⏭️ M4 — Offline food diary
+- ✅ M4 — Offline food diary (Today/Diary, manual logs, totals, undo, copy, custom meals)
+- ⏭️ M5 — Local food database and search
 
 ## Disclaimer
 

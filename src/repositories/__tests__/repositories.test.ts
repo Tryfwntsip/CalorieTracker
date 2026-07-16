@@ -1,9 +1,11 @@
 import { initializeDatabase } from '@/db/initialize';
 import {
   createBarcodeRepository,
+  createActivityRepository,
   createDiaryRepository,
   createFoodRepository,
   createHealthRecordRepository,
+  createMealSectionRepository,
   createProfileRepository,
   createSettingsRepository,
   defaultSettings,
@@ -217,6 +219,69 @@ describe('repositories', () => {
     await expect(health.getWater(water.id)).resolves.toBeNull();
     await expect(health.getWeight(weight.id)).resolves.toBeNull();
     await expect(diary.getEntry(entry.id)).resolves.toBeNull();
+  });
+
+  it('supports customizable sections, diary undo/copy, exercise, and steps', async () => {
+    const diary = createDiaryRepository(database, clock);
+    const meals = createMealSectionRepository(database, clock);
+    const activity = createActivityRepository(database, clock);
+
+    const section = await meals.create({
+      id: 'late_snack',
+      name: 'Late snack',
+      nameEl: 'Βραδινό σνακ',
+      position: 6,
+      isHidden: false,
+      isDefault: false,
+    });
+    await meals.update({ ...section, name: 'Supper', isHidden: true });
+    expect((await meals.list()).at(-1)).toMatchObject({ name: 'Supper', isHidden: true });
+    const reversedSectionIds = (await meals.list()).map(({ id }) => id).reverse();
+    await meals.reorder(reversedSectionIds);
+    expect((await meals.list())[0]?.id).toBe('late_snack');
+
+    const entry = await diary.createEntry({
+      ...diaryEntryWrite,
+      id: 'copy-source',
+      foodId: null,
+      customLabel: 'Manual lunch',
+      loggedVia: 'manual',
+    });
+    expect(await diary.getDay(entry.dayDate)).not.toBeNull();
+    await diary.softDeleteEntry(entry.id);
+    expect((await diary.getEntry(entry.id))?.deletedAt).toBe(firstTimestamp);
+    await diary.restoreEntry(entry.id);
+    expect((await diary.getEntry(entry.id))?.deletedAt).toBeNull();
+
+    await expect(
+      diary.copyEntries('2026-07-16', '2026-07-17', null, ['copy-target']),
+    ).resolves.toBe(1);
+    await expect(diary.listEntries('2026-07-17')).resolves.toMatchObject([
+      { id: 'copy-target', customLabel: 'Manual lunch' },
+    ]);
+
+    const exercise = await activity.createExercise({
+      id: 'exercise',
+      dayDate: '2026-07-16',
+      activityType: 'Walk',
+      durationMinutes: 30,
+      energyKcal: 140,
+      origin: 'manual',
+      externalUid: null,
+    });
+    expect(await activity.listExercises('2026-07-16')).toEqual([exercise]);
+    await activity.updateExercise({ ...exercise, durationMinutes: 35 });
+    expect((await activity.listExercises('2026-07-16'))[0]?.durationMinutes).toBe(35);
+
+    const steps = await activity.upsertSteps({
+      id: 'steps',
+      dayDate: '2026-07-16',
+      steps: 5000,
+      origin: 'manual',
+      externalUid: null,
+    });
+    await activity.upsertSteps({ ...steps, steps: 7000 });
+    expect((await activity.getSteps('2026-07-16'))?.steps).toBe(7000);
   });
 
   it('supports scanned-product cache and scan-history CRUD', async () => {

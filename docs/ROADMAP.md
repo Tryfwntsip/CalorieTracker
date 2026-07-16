@@ -16,7 +16,7 @@ Expo SDK 57 + TS strict + Expo Router; tokens/themes; i18n en/el; UI kit; 5-tab 
 
 **Scope:** expo-sqlite setup; database initialization on first launch; **versioned migrations** (PRAGMA `user_version`, ordered, transactional, tested); repository/service layer (typed CRUD, Zod-validated rows, no SQL outside `src/db` + repositories); tables: **profile, settings, foods, food_portions, diary_days, diary_entries, weight_records, water_records, scanned_products, barcode_scan_history**; `created_at`/`updated_at` where appropriate; foreign keys ON + indexes; **development-only seed data**; unit + integration tests for initialization, migrations, and repositories. No UI beyond existing placeholders.
 **Files/modules:** `src/db/` (client, migration runner, `migrations/001_*.ts`…, `seed/dev.ts`), `src/repositories/*`, `src/schemas/*`, `src/types/*`.
-**DB changes:** full M2 schema (DATA_MODEL §2–§4).
+**DB changes:** full M2 schema (DATA_MODEL §2).
 **API changes:** none (no network in this milestone).
 **Tests:** migration runner (fresh install; stepwise upgrades; failed migration rolls back); FK cascade behavior; CRUD round-trip per repository; seed idempotency + prod-guard; `PRAGMA foreign_keys` verified ON.
 **Risks:** migration discipline from day one (getting `user_version` flow right); date/UUID conventions — reuse `domain/dates` and UUIDv7 strings.
@@ -40,9 +40,11 @@ Expo SDK 57 + TS strict + Expo Router; tokens/themes; i18n en/el; UI kit; 5-tab 
 **Acceptance:** fresh install onboards to a computed, guarded calorie/macro target stored in SQLite; everything editable later from Profile; relaunch keeps data; no network involved.
 **Depends on:** M2.
 
-## M4 — Food diary
+## M4 — Food diary ✅
 
 **Scope:** Diary + Today tabs become real: meal sections (rename/reorder/hide), manual quick-entry (label + kcal ± macros), water, weight, mood, daily notes, manual exercise & steps; edit/delete/undo; copy meal/day; past & future dates; consumed/burned/remaining/target header using M3 targets; per-weekday target overrides.
+**DB changes:** migration 003 adds localized `meal_sections`, `exercise_logs`, and `steps_logs`; rebuilds `diary_entries` with a meal-section FK while preserving M2/M3 rows; adds day/section, origin/external-UID, and ordering indexes.
+**Tests:** pure totals and weekday-target resolution; M3→M4 data-preserving migration; section/activity/steps/copy/tombstone repository integration; manual quick-add component flow.
 **Acceptance:** full diary usable offline; totals correct; undo works; copy works; history navigable.
 **Depends on:** M2, M3.
 

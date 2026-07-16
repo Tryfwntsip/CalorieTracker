@@ -18,6 +18,7 @@ FROM water_records
 
 export interface HealthRecordRepository {
   getWeight(id: string): Promise<WeightRecord | null>;
+  getWeightForDay(dayDate: string): Promise<WeightRecord | null>;
   listWeights(): Promise<WeightRecord[]>;
   createWeight(record: WeightRecordWrite): Promise<WeightRecord>;
   updateWeight(record: WeightRecordWrite): Promise<WeightRecord>;
@@ -64,6 +65,17 @@ export function createHealthRecordRepository(
 
   return {
     getWeight,
+    async getWeightForDay(dayDate) {
+      try {
+        const row = await database.getFirstAsync<unknown>(
+          `${selectWeight} WHERE day_date = ?`,
+          dayDate,
+        );
+        return row === null ? null : parseRecord(weightRecordSchema, row, 'weight_record');
+      } catch (error: unknown) {
+        throw mapRepositoryError(error, 'weight_record');
+      }
+    },
     async listWeights() {
       try {
         const rows = await database.getAllAsync<unknown>(

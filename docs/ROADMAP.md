@@ -48,9 +48,11 @@ Expo SDK 57 + TS strict + Expo Router; tokens/themes; i18n en/el; UI kit; 5-tab 
 **Acceptance:** full diary usable offline; totals correct; undo works; copy works; history navigable.
 **Depends on:** M2, M3.
 
-## M5 — Food database & search
+## M5 — Food database & search ✅
 
 **Scope:** foods catalog UX: local text search (Greek + English, accent-insensitive) over seeded Greek food DB + user's custom foods; food detail (per-100 g/ml and per-portion, source & quality badges); custom foods CRUD; portions (g, ml, serving, piece, tsp, tbsp); favorites & recents; meal templates ("My meals"); nutrient snapshot into diary entries. Optional **online text search via Open Food Facts** (no key, results cached into `foods`), clearly separated from local results and fully skippable offline. Greek seed DB grows to ~150 foods (production seed, not dev-only).
+**DB changes:** migration 004 adds normalized search keys, 150 bilingual production foods and portions, `food_overrides`, `food_favorites`, `food_recents`, `meal_templates`, and `meal_template_items`.
+**Tests:** accent normalization and portion math; M4→M5 migration/catalog coverage; search/favorite/recent/override/template repositories; OFF fixture mapping and cache contract; offline `γιγαντες` search-to-diary component flow.
 **Acceptance:** find & log γίγαντες (local) offline; optional OFF search works online and caches; corrections stored as user overrides; templates loggable offline.
 **Depends on:** M4.
 

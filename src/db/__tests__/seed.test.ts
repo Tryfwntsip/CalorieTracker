@@ -33,8 +33,8 @@ describe('development seeds', () => {
     const entries = await database.getFirstAsync<{ count: number }>(
       'SELECT COUNT(*) AS count FROM diary_entries',
     );
-    expect(foods?.count).toBe(3);
-    expect(portions?.count).toBe(3);
+    expect(foods?.count).toBe(153);
+    expect(portions?.count).toBe(153);
     expect(entries?.count).toBe(2);
   });
 
@@ -43,7 +43,7 @@ describe('development seeds', () => {
       seedDevelopmentData(database, { ...seedOptions, isDevelopment: false }),
     ).resolves.toBe(false);
     const foods = await database.getFirstAsync<{ count: number }>(
-      'SELECT COUNT(*) AS count FROM foods',
+      `SELECT COUNT(*) AS count FROM foods WHERE external_id LIKE 'dev-%'`,
     );
     expect(foods?.count).toBe(0);
   });

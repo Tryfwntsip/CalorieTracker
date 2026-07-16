@@ -78,7 +78,7 @@ serving_name TEXT NULL, serving_grams REAL NULL,
 energy_kcal REAL NULL, protein_g REAL NULL, carbs_g REAL NULL, fat_g REAL NULL,
 sat_fat_g REAL NULL, mono_fat_g REAL NULL, poly_fat_g REAL NULL,
 fiber_g REAL NULL, sugar_g REAL NULL, salt_g REAL NULL, sodium_mg REAL NULL,
-cholesterol_mg REAL NULL, micros_json TEXT NULL (JSON, canonical keys — §6),
+cholesterol_mg REAL NULL, micros_json TEXT NULL (JSON, canonical keys — §7),
 created_at TEXT, updated_at TEXT
 UNIQUE(source, external_id) WHERE external_id IS NOT NULL
 INDEX idx_foods_barcode ON foods(barcode)
@@ -191,9 +191,43 @@ INDEX idx_steps_day ON steps_logs(day_date)
 UNIQUE(origin, external_uid) WHERE external_uid IS NOT NULL
 ```
 
-## 4. Later-milestone tables (introduced by their own migrations)
+## 4. M5 food catalog tables
 
-- **M5:** `food_overrides` (user corrections; original untouched), `food_favorites`, `food_recents`, `meal_templates` + `meal_template_items`.
+Migration 004 adds `search_name` and `search_name_el` to `foods`. Repositories maintain both as lowercase, accent-stripped keys (including normalized Greek final sigma). They are implementation columns and never replace the displayed source names.
+
+**food_overrides** — user corrections without rewriting source data
+
+```
+food_id TEXT PK REFERENCES foods(id) ON DELETE CASCADE,
+name TEXT, name_el TEXT, search_name TEXT, search_name_el TEXT,
+energy_kcal REAL NULL, protein_g REAL NULL, carbs_g REAL NULL, fat_g REAL NULL,
+sat_fat_g REAL NULL, fiber_g REAL NULL, sugar_g REAL NULL,
+salt_g REAL NULL, sodium_mg REAL NULL, updated_at TEXT
+```
+
+**food_favorites / food_recents**
+
+```
+food_favorites(food_id TEXT PK REFERENCES foods(id) ON DELETE CASCADE, created_at TEXT)
+food_recents(food_id TEXT PK REFERENCES foods(id) ON DELETE CASCADE,
+             last_used_at TEXT, use_count INTEGER)
+```
+
+**meal_templates / meal_template_items**
+
+```
+meal_templates(id TEXT PK, name TEXT, created_at TEXT, updated_at TEXT)
+meal_template_items(
+  id TEXT PK, template_id TEXT REFERENCES meal_templates(id) ON DELETE CASCADE,
+  food_id TEXT REFERENCES foods(id) ON DELETE CASCADE,
+  grams REAL, position INTEGER, created_at TEXT, UNIQUE(template_id, position)
+)
+```
+
+The production part of migration 004 inserts 150 original bilingual Greek/common foods and one provider-defined portion for each. It is idempotent by stable IDs/external IDs and is separate from the optional development demo diary seed.
+
+## 5. Later-milestone tables (introduced by their own migrations)
+
 - **M8:** `recipes`, `recipe_ingredients`, `recipe_favorites`, `grocery_lists`, `grocery_items`.
 - **M9:** `meal_plans`, `meal_plan_entries` (XOR check: recipe/food/template).
 - **M10:** `fasting_plans`, `fasting_sessions`.
@@ -201,27 +235,27 @@ UNIQUE(origin, external_uid) WHERE external_uid IS NOT NULL
 
 Column shapes follow the same conventions; each lands with its milestone and its own migration + tests.
 
-## 5. Migration discipline
+## 6. Migration discipline
 
 - `src/db/migrations/index.ts` exports the ordered list; the runner (`src/db/migrate.ts`) wraps each pending migration in a transaction, applies in order, sets `PRAGMA user_version = n`.
 - A failing migration rolls back, leaves the previous `user_version`, and surfaces a typed error (tested).
 - Destructive column changes use the SQLite table-rebuild recipe (new table → copy → drop → rename) inside one transaction.
 - Tests cover: fresh install → latest; every stepwise upgrade path from each released version; idempotent re-run.
 
-## 6. Canonical nutrient model
+## 7. Canonical nutrient model
 
 Unchanged in spirit from the original design: fixed macro columns + `micros_json` restricted to canonical keys (`vit_a_ug, vit_c_mg, vit_d_ug, vit_e_mg, vit_k_ug, thiamin_mg, riboflavin_mg, niacin_mg, vit_b6_mg, folate_ug, vit_b12_ug, calcium_mg, iron_mg, magnesium_mg, potassium_mg, zinc_mg, phosphorus_mg, selenium_ug, iodine_ug`), Zod-enforced (`src/domain/schemas/nutrients.ts`). Missing = `NULL`/absent, never 0. Provider mappings (OFF → canonical) live with the OFF adapter and are fixture-tested.
 
-## 7. Seed data
+## 8. Seed data
 
 - **Dev-only** (`src/db/seed/dev.ts`): a small set of original Greek example foods with portions + one demo diary day; runs only in `__DEV__`, only when all relevant tables are empty, and is idempotent.
 - **Production catalog** (M5+): curated Greek foods/recipes shipped as versioned seed migrations (originally authored; no scraped/proprietary data).
 
-## 8. Aggregation for analytics (M7)
+## 9. Aggregation for analytics (M7)
 
 Daily-summary SQL view over diary_entries/water/weight/steps/exercise per day powers charts; queries stay in repositories; 2 years of history must render without materializing raw rows in JS.
 
-## 9. Implementation decisions
+## 10. Implementation decisions
 
 - SQLite cannot express strict ISO-8601 or real-calendar validation cleanly with portable `CHECK` syntax, so date/timestamp shape is enforced by Zod on every repository read; enum, range, uniqueness, and relationship rules remain database constraints.
 - `food_portions` are deleted with their food (`CASCADE`). Historical diary entries and cached scan records keep their event rows when a food is removed, but their food reference becomes `NULL` (`SET NULL`). Deleting a diary day deletes its entries (`CASCADE`).

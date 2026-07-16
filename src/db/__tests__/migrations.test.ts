@@ -20,6 +20,11 @@ const requiredTables = [
   'meal_sections',
   'exercise_logs',
   'steps_logs',
+  'food_overrides',
+  'food_favorites',
+  'food_recents',
+  'meal_templates',
+  'meal_template_items',
 ];
 
 const requiredIndexes = [
@@ -38,6 +43,10 @@ const requiredIndexes = [
   'idx_exercise_external_uid',
   'idx_steps_day',
   'idx_steps_external_uid',
+  'idx_foods_search_name',
+  'idx_foods_search_name_el',
+  'idx_food_recents_used',
+  'idx_template_items_template',
 ];
 
 describe('SQLite initialization and migrations', () => {
@@ -249,10 +258,48 @@ describe('SQLite initialization and migrations', () => {
     ).rejects.toThrow();
   });
 
+  it('adds the production catalog and accent-insensitive Greek search keys', async () => {
+    await initializeDatabase(database);
+    const count = await database.getFirstAsync<{ count: number }>(
+      `SELECT COUNT(*) AS count FROM foods WHERE source = 'greek_seed'`,
+    );
+    const giants = await database.getFirstAsync<{ search_name_el: string }>(
+      `SELECT search_name_el FROM foods WHERE name_el = 'Γίγαντες πλακί'`,
+    );
+
+    expect(count?.count).toBeGreaterThanOrEqual(150);
+    expect(giants?.search_name_el).toBe('γιγαντεσ πλακι');
+  });
+
+  it('upgrades an M4 custom food and backfills its search keys', async () => {
+    await initializeDatabase(database, migrations.slice(0, 3));
+    const timestamp = '2026-07-16T08:00:00.000Z';
+    await database.runAsync(
+      `INSERT INTO foods (
+        id, name, name_el, source, quality, is_liquid, energy_kcal,
+        created_at, updated_at
+      ) VALUES (?, ?, ?, 'user', 'user_entered', 0, 100, ?, ?)`,
+      'existing-custom',
+      'Sesame ring',
+      'Κουλούρι Θεσσαλονίκης',
+      timestamp,
+      timestamp,
+    );
+
+    await initializeDatabase(database);
+
+    await expect(
+      database.getFirstAsync<{ search_name_el: string }>(
+        'SELECT search_name_el FROM foods WHERE id = ?',
+        'existing-custom',
+      ),
+    ).resolves.toEqual({ search_name_el: 'κουλουρι θεσσαλονικησ' });
+  });
+
   it('rolls back a failing migration and preserves the prior version', async () => {
     await initializeDatabase(database, migrations);
     const failing: Migration = {
-      version: 4,
+      version: 5,
       name: 'deliberate_failure',
       up: async (transaction) => {
         await transaction.execAsync(`
@@ -264,7 +311,7 @@ describe('SQLite initialization and migrations', () => {
 
     await expect(initializeDatabase(database, [...migrations, failing])).rejects.toMatchObject({
       code: 'migration_failed',
-      migrationVersion: 4,
+      migrationVersion: 5,
     } satisfies Partial<DatabaseInitializationError>);
 
     await expect(getUserVersion(database)).resolves.toBe(latestMigrationVersion);

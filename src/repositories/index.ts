@@ -4,6 +4,7 @@ export * from '@/repositories/errors';
 export * from '@/repositories/foodRepository';
 export * from '@/repositories/healthRecordRepository';
 export * from '@/repositories/mealSectionRepository';
+export * from '@/repositories/mealTemplateRepository';
 export * from '@/repositories/profileRepository';
 export * from '@/repositories/settingsRepository';
 export * from '@/repositories/shared';

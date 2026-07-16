@@ -10,13 +10,18 @@ FROM diary_days
 `;
 
 const selectEntry = `
-SELECT id, day_date AS dayDate, section, food_id AS foodId, custom_label AS customLabel,
-  quantity, unit, grams_resolved AS gramsResolved, energy_kcal AS energyKcal,
-  protein_g AS proteinG, carbs_g AS carbsG, fat_g AS fatG, sat_fat_g AS satFatG,
-  fiber_g AS fiberG, sugar_g AS sugarG, sodium_mg AS sodiumMg,
-  micros_snapshot_json AS microsSnapshot, logged_via AS loggedVia,
-  deleted_at AS deletedAt, created_at AS createdAt, updated_at AS updatedAt
-FROM diary_entries
+SELECT e.id, e.day_date AS dayDate, e.section, e.food_id AS foodId,
+  COALESCE(o.name, f.name) AS foodName, COALESCE(o.name_el, f.name_el) AS foodNameEl,
+  e.custom_label AS customLabel, e.quantity, e.unit,
+  e.grams_resolved AS gramsResolved, e.energy_kcal AS energyKcal,
+  e.protein_g AS proteinG, e.carbs_g AS carbsG, e.fat_g AS fatG,
+  e.sat_fat_g AS satFatG, e.fiber_g AS fiberG, e.sugar_g AS sugarG,
+  e.sodium_mg AS sodiumMg, e.micros_snapshot_json AS microsSnapshot,
+  e.logged_via AS loggedVia, e.deleted_at AS deletedAt,
+  e.created_at AS createdAt, e.updated_at AS updatedAt
+FROM diary_entries e
+LEFT JOIN foods f ON f.id = e.food_id
+LEFT JOIN food_overrides o ON o.food_id = e.food_id
 `;
 
 export interface DiaryRepository {
@@ -56,7 +61,7 @@ export function createDiaryRepository(
 
   const getEntry = async (id: string): Promise<DiaryEntry | null> => {
     try {
-      const row = await database.getFirstAsync<unknown>(`${selectEntry} WHERE id = ?`, id);
+      const row = await database.getFirstAsync<unknown>(`${selectEntry} WHERE e.id = ?`, id);
       return row === null ? null : parseRecord(diaryEntrySchema, row, 'diary_entry');
     } catch (error: unknown) {
       throw mapRepositoryError(error, 'diary_entry');
@@ -176,7 +181,7 @@ export function createDiaryRepository(
     async listEntries(dayDate) {
       try {
         const rows = await database.getAllAsync<unknown>(
-          `${selectEntry} WHERE day_date = ? ORDER BY created_at, id`,
+          `${selectEntry} WHERE e.day_date = ? ORDER BY e.created_at, e.id`,
           dayDate,
         );
         return rows.map((row) => parseRecord(diaryEntrySchema, row, 'diary_entry'));
@@ -263,9 +268,9 @@ export function createDiaryRepository(
       try {
         const sourceEntries = await database.getAllAsync<DiaryEntry>(
           `${selectEntry}
-           WHERE day_date = ? AND deleted_at IS NULL
-             AND (? IS NULL OR section = ?)
-           ORDER BY created_at, id`,
+           WHERE e.day_date = ? AND e.deleted_at IS NULL
+             AND (? IS NULL OR e.section = ?)
+           ORDER BY e.created_at, e.id`,
           sourceDate,
           section,
           section,

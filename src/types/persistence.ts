@@ -6,8 +6,13 @@ import {
   diaryEntrySchema,
   exerciseLogSchema,
   foodPortionSchema,
+  foodFavoriteSchema,
+  foodOverrideSchema,
+  foodRecentSchema,
   foodSchema,
   mealSectionSchema,
+  mealTemplateItemSchema,
+  mealTemplateSchema,
   profileGoalHistorySchema,
   profileSchema,
   scannedProductSchema,
@@ -22,6 +27,11 @@ export type ProfileGoalHistory = z.output<typeof profileGoalHistorySchema>;
 export type Settings = z.output<typeof settingsSchema>;
 export type Food = z.output<typeof foodSchema>;
 export type FoodPortion = z.output<typeof foodPortionSchema>;
+export type FoodOverride = z.output<typeof foodOverrideSchema>;
+export type FoodFavorite = z.output<typeof foodFavoriteSchema>;
+export type FoodRecent = z.output<typeof foodRecentSchema>;
+export type MealTemplate = z.output<typeof mealTemplateSchema>;
+export type MealTemplateItem = z.output<typeof mealTemplateItemSchema>;
 export type DiaryDay = z.output<typeof diaryDaySchema>;
 export type DiaryEntry = z.output<typeof diaryEntrySchema>;
 export type MealSection = z.output<typeof mealSectionSchema>;
@@ -36,8 +46,14 @@ export type ProfileWrite = Omit<Profile, 'id' | 'createdAt' | 'updatedAt'>;
 export type SettingsWrite = Omit<Settings, 'id' | 'createdAt' | 'updatedAt'>;
 export type FoodWrite = Omit<Food, 'createdAt' | 'updatedAt'>;
 export type FoodPortionWrite = FoodPortion;
+export type FoodOverrideWrite = Omit<FoodOverride, 'updatedAt'>;
+export type MealTemplateWrite = Omit<MealTemplate, 'createdAt' | 'updatedAt'>;
+export type MealTemplateItemWrite = Omit<MealTemplateItem, 'createdAt'>;
 export type DiaryDayWrite = Omit<DiaryDay, 'createdAt' | 'updatedAt'>;
-export type DiaryEntryWrite = Omit<DiaryEntry, 'createdAt' | 'updatedAt'>;
+export type DiaryEntryWrite = Omit<
+  DiaryEntry,
+  'foodName' | 'foodNameEl' | 'createdAt' | 'updatedAt'
+>;
 export type MealSectionWrite = Omit<MealSection, 'createdAt' | 'updatedAt'>;
 export type ExerciseLogWrite = Omit<ExerciseLog, 'createdAt' | 'updatedAt'>;
 export type StepsLogWrite = Omit<StepsLog, 'createdAt' | 'updatedAt'>;

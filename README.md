@@ -46,7 +46,8 @@ npm test
 - ✅ M2 — Local SQLite foundation (migrations, repositories, core tables, dev seeds)
 - ✅ M3 — Personal profile and guarded calorie/macro targets
 - ✅ M4 — Offline food diary (Today/Diary, manual logs, totals, undo, copy, custom meals)
-- ⏭️ M5 — Local food database and search
+- ✅ M5 — Local food catalog and search (150 bilingual foods, portions, favorites, templates)
+- ⏭️ M6 — Barcode scanning
 
 ## Disclaimer
 

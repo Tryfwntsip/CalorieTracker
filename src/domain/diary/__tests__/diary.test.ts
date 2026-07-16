@@ -6,6 +6,8 @@ const entry = (values: Partial<DiaryEntry>): DiaryEntry => ({
   dayDate: '2026-07-16',
   section: 'lunch',
   foodId: null,
+  foodName: null,
+  foodNameEl: null,
   customLabel: 'Lunch',
   quantity: 1,
   unit: 'serving',

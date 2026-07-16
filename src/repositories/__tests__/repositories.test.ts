@@ -6,6 +6,7 @@ import {
   createFoodRepository,
   createHealthRecordRepository,
   createMealSectionRepository,
+  createMealTemplateRepository,
   createProfileRepository,
   createSettingsRepository,
   defaultSettings,
@@ -148,7 +149,9 @@ describe('repositories', () => {
     expect(updated.createdAt).toBe(firstTimestamp);
     expect(updated.updatedAt).toBe(secondTimestamp);
     expect(updatedPortion.grams).toBe(125);
-    await expect(foods.list()).resolves.toHaveLength(1);
+    await expect(foods.search('Updated food')).resolves.toMatchObject([
+      { id: foodWrite.id, name: 'Updated food' },
+    ]);
     await expect(foods.listPortions(foodWrite.id)).resolves.toHaveLength(1);
 
     await database.runAsync(
@@ -282,6 +285,50 @@ describe('repositories', () => {
     });
     await activity.upsertSteps({ ...steps, steps: 7000 });
     expect((await activity.getSteps('2026-07-16'))?.steps).toBe(7000);
+  });
+
+  it('supports accent-insensitive food search, favorites, recents, overrides, and templates', async () => {
+    const foods = createFoodRepository(database, clock);
+    const templates = createMealTemplateRepository(database, clock);
+
+    const giants = await foods.search('γιγαντες');
+    expect(giants[0]).toMatchObject({ nameEl: 'Γίγαντες πλακί', source: 'greek_seed' });
+    const food = giants[0];
+    if (!food) throw new Error('Expected seeded giants.');
+
+    await foods.setFavorite(food.id, true);
+    expect(await foods.isFavorite(food.id)).toBe(true);
+    expect(await foods.listFavorites()).toMatchObject([{ id: food.id }]);
+
+    await foods.markRecent(food.id);
+    await foods.markRecent(food.id);
+    expect(await foods.listRecents()).toMatchObject([{ id: food.id }]);
+
+    await foods.saveOverride({
+      foodId: food.id,
+      name: 'Giant beans, corrected',
+      nameEl: 'Γίγαντες, διόρθωση',
+      energyKcal: 140,
+      proteinG: food.proteinG,
+      carbsG: food.carbsG,
+      fatG: food.fatG,
+      satFatG: food.satFatG,
+      fiberG: food.fiberG,
+      sugarG: food.sugarG,
+      saltG: food.saltG,
+      sodiumMg: food.sodiumMg,
+    });
+    expect(await foods.get(food.id)).toMatchObject({
+      name: 'Giant beans, corrected',
+      energyKcal: 140,
+    });
+    expect(await foods.search('διορθωση')).toMatchObject([{ id: food.id }]);
+
+    const template = await templates.create({ id: 'template', name: 'Lunch' }, [
+      { id: 'template-item', templateId: 'template', foodId: food.id, grams: 250, position: 0 },
+    ]);
+    expect(await templates.list()).toEqual([template]);
+    expect(await templates.listItems(template.id)).toMatchObject([{ foodId: food.id, grams: 250 }]);
   });
 
   it('supports scanned-product cache and scan-history CRUD', async () => {

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { addDays, dayKeyOf, formatDayKey, isDayKey } from '@/domain/dates';
 import { BLOCKED_CALORIE_TARGET, CONFIRM_CALORIE_TARGET_MAX } from '@/domain/goals/guardrails';
+import { FoodSearchSheet } from '@/features/food/FoodSearchSheet';
 import { useProfile } from '@/features/profile/ProfileProvider';
 import type { DiaryEntry, ExerciseLog, MealSection, WaterRecord } from '@/types';
 import {
@@ -22,7 +23,8 @@ import { useTheme } from '@/ui/theme';
 import { MIN_TOUCH_TARGET, radii, spacing } from '@/ui/tokens';
 import { type ExerciseValues, type QuickEntryValues, useDiaryData } from './useDiaryData';
 
-type SheetName = 'entry' | 'exercise' | 'daily' | 'sections' | 'copy' | 'override' | null;
+type SheetName =
+  'foodSearch' | 'entry' | 'exercise' | 'daily' | 'sections' | 'copy' | 'override' | null;
 
 type Props = {
   mode: 'today' | 'diary';
@@ -99,6 +101,11 @@ export function DiaryScreen({ mode }: Props) {
     setSheet('entry');
   };
 
+  const openFoodSearch = (section: string) => {
+    setEntrySection(section);
+    setSheet('foodSearch');
+  };
+
   return (
     <Screen>
       <View style={styles.titleRow}>
@@ -168,6 +175,11 @@ export function DiaryScreen({ mode }: Props) {
       <View style={styles.quickActions}>
         <Button
           label={t('diary.addFood')}
+          onPress={() => openFoodSearch(visibleSections[0]?.id ?? 'breakfast')}
+        />
+        <Button
+          label={t('diary.manualQuickEntry')}
+          variant="secondary"
           onPress={() => openNewEntry(visibleSections[0]?.id ?? 'breakfast')}
         />
         <Button label={t('diary.logDay')} variant="secondary" onPress={() => setSheet('daily')} />
@@ -276,7 +288,7 @@ export function DiaryScreen({ mode }: Props) {
               <Button
                 label={t('common.add')}
                 variant="ghost"
-                onPress={() => openNewEntry(section.id)}
+                onPress={() => openFoodSearch(section.id)}
               />
             </View>
             {sectionEntries.length === 0 ? (
@@ -294,7 +306,11 @@ export function DiaryScreen({ mode }: Props) {
                     }}
                   >
                     <AppText variant="bodyStrong">
-                      {entry.customLabel ?? t('diary.quickEntry')}
+                      {entry.customLabel ??
+                        (i18n.language === 'el'
+                          ? (entry.foodNameEl ?? entry.foodName)
+                          : entry.foodName) ??
+                        t('diary.quickEntry')}
                     </AppText>
                     <AppText color="secondary">
                       {t('diary.entryCalories', {
@@ -350,6 +366,13 @@ export function DiaryScreen({ mode }: Props) {
           });
           setSheet(null);
         }}
+      />
+      <FoodSearchSheet
+        visible={sheet === 'foodSearch'}
+        dayDate={dayDate}
+        section={entrySection}
+        onClose={() => setSheet(null)}
+        onLogged={diary.retry}
       />
       <ExerciseSheet
         visible={sheet === 'exercise'}

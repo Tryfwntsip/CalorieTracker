@@ -15,11 +15,10 @@ const foodIds = {
   salad: '0190f000-0000-7000-8000-000000000003',
 } as const;
 
-async function tablesAreEmpty(database: Database): Promise<boolean> {
+async function developmentDataIsAbsent(database: Database): Promise<boolean> {
   const row = await database.getFirstAsync<CountRow>(`
     SELECT
-      (SELECT COUNT(*) FROM foods) +
-      (SELECT COUNT(*) FROM food_portions) +
+      (SELECT COUNT(*) FROM foods WHERE external_id LIKE 'dev-%') +
       (SELECT COUNT(*) FROM diary_days) +
       (SELECT COUNT(*) FROM diary_entries) AS count
   `);
@@ -33,7 +32,7 @@ export async function seedDevelopmentData(
   if (!options.isDevelopment) return false;
 
   return database.withTransactionAsync(async (transaction) => {
-    if (!(await tablesAreEmpty(transaction))) return false;
+    if (!(await developmentDataIsAbsent(transaction))) return false;
 
     const clock = { now: () => options.now };
     const foods = createFoodRepository(transaction, clock);

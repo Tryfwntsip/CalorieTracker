@@ -16,12 +16,13 @@ Status: revised 2026-07-16 — local-first. **No API keys, external accounts, or
 ## 2. Local Greek food & recipe DB
 
 - Originally authored entries (nutrients from public-domain composition sources) — never scraped from commercial apps; both `name` and `name_el` populated; `source='greek_seed'`, `quality='complete'`.
-- Dev seed (~20 foods) in M2; production catalog (~150 foods) ships in M5 as seed migrations; ~25 original recipes in M8.
+- Dev seed examples arrived in M2; the production catalog of 150 bilingual foods ships in migration 004 (M5); ~25 original recipes arrive in M8.
 - This is the **primary** search source — the app must feel complete with the device offline.
 
 ## 3. Open Food Facts
 
-- Product by barcode: `GET https://world.openfoodfacts.org/api/v2/product/{barcode}`; optional text search via `/api/v2/search`. No key; **custom User-Agent required** (app working title + a contact email — decided when M6 lands; no account needed).
+- Product by barcode: `GET https://world.openfoodfacts.org/api/v3/product/{barcode}` (M6). Current OFF v2/v3 search is structured only, so M5's optional plain-text search uses the documented legacy `/cgi/search.pl` endpoint. It is user-triggered, limited to 20 fields/results, never search-as-you-type, and sends a custom `CalorieTracker/1.0` User-Agent. No key or account is needed.
+- OFF currently limits search requests to 10/min/IP. The UI therefore keeps local SQLite search primary and makes each network search an explicit button press.
 - Cache-through: every successful lookup is normalized into `foods` (+ `scanned_products` for barcodes) so repeats work offline forever.
 - Quality: crowdsourced → `quality='partial'` unless completeness checks pass (energy + macros present); keep `nova_class` for the food score.
 - **ODbL license obligations:** visible attribution ("Data from Open Food Facts") on OFF-sourced food detail screens + in About. Personal use keeps obligations minimal; we still honor attribution.

@@ -22,6 +22,8 @@ export const diaryEntrySchema = z
     dayDate: dayKeySchema,
     section: z.string().min(1),
     foodId: z.string().nullable(),
+    foodName: z.string().nullable(),
+    foodNameEl: z.string().nullable(),
     customLabel: z.string().nullable(),
     quantity: z.number().positive(),
     unit: z.enum(['g', 'ml', 'serving', 'piece', 'tsp', 'tbsp']),

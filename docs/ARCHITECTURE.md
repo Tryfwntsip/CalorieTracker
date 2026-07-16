@@ -83,6 +83,8 @@ src/app routes → src/features → src/services + src/repositories → src/doma
 - M4's Today and Diary screens share one repository-backed feature hook. Writes explicitly reload the selected local day; no server-state dependency was added because SQLite is authoritative and the diary has no remote cache to reconcile.
 - Meal sections are rows, not settings JSON: this permits stable foreign keys, localized names, ordering, and visibility. The M4 migration rebuilds `diary_entries` without data loss and replaces its fixed section enum with a `meal_sections` reference.
 - Diary entry deletion first writes a six-second tombstone (`deleted_at`); undo clears it. Other append-only manual records are recreated from their validated in-memory snapshot during the same undo window.
+- M5 local food search uses migration-maintained, accent-stripped lowercase keys for both English and Greek names. SQLite remains the only catalog queried during normal typing; the optional OFF request runs only after an explicit user action and successful results are cache-through.
+- Curated/OFF corrections are overlay rows in `food_overrides`, preserving the source row. Custom foods remain directly editable user-owned rows. Diary entries always snapshot the effective overlaid nutrients at log time.
 
 ### Integration-test runtime
 
@@ -137,3 +139,5 @@ Dev: Expo dev tools + `src/lib/logger` (leveled, redacting). **No third-party cr
 | D9  | Personal use only: no accounts/auth/cloud/subscriptions/ads/telemetry/store distribution | Accepted                                                  |
 | D10 | OFF called directly (keyless); USDA deferred; vision key user-supplied at runtime        | Accepted                                                  |
 | D11 | Repository-backed feature hooks instead of a server-state cache for the local-only diary | Accepted (M4; avoids an unnecessary dependency)           |
+| D12 | Normalized search-key columns instead of locale-dependent SQLite collation               | Accepted (M5; deterministic accent-insensitive en/el)     |
+| D13 | OFF plain-text search uses its explicit legacy endpoint, never search-as-you-type        | Accepted (M5; current OFF v2/v3 omit full-text search)    |

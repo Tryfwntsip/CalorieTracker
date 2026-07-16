@@ -2,6 +2,7 @@ export * from '@/schemas/barcode';
 export * from '@/schemas/diary';
 export * from '@/schemas/food';
 export * from '@/schemas/foodTracking';
+export * from '@/schemas/mealPlanning';
 export * from '@/schemas/profile';
 export * from '@/schemas/profileForm';
 export * from '@/schemas/progress';

@@ -30,6 +30,8 @@ const requiredTables = [
   'recipe_favorites',
   'grocery_lists',
   'grocery_items',
+  'meal_plans',
+  'meal_plan_entries',
 ];
 
 const requiredIndexes = [
@@ -56,6 +58,10 @@ const requiredIndexes = [
   'idx_recipe_ingredients_recipe',
   'idx_recipe_ingredients_food',
   'idx_grocery_items_list',
+  'idx_meal_plan_entries_plan',
+  'idx_meal_plan_entries_recipe',
+  'idx_meal_plan_entries_food',
+  'idx_meal_plan_entries_template',
 ];
 
 describe('SQLite initialization and migrations', () => {

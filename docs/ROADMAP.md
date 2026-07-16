@@ -75,7 +75,7 @@ Weight (trend line), calories vs target, water, steps, macros; weekly/monthly av
 Recipe CRUD + seeded original recipes; per-serving nutrition from ingredients; dietary/allergy filters; favorites; log servings to diary; grocery lists with unit-aware combining. All local.
 **Depends on:** M5.
 
-## M9 — Meal planning
+## M9 — Meal planning ✅
 
 Weekly planner (day × meal slot), one-tap add to diary, grocery list from plan, copy week. All local.
 **Depends on:** M8.

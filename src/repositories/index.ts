@@ -5,6 +5,7 @@ export * from '@/repositories/foodRepository';
 export * from '@/repositories/healthRecordRepository';
 export * from '@/repositories/groceryRepository';
 export * from '@/repositories/mealSectionRepository';
+export * from '@/repositories/mealPlanRepository';
 export * from '@/repositories/mealTemplateRepository';
 export * from '@/repositories/profileRepository';
 export * from '@/repositories/progressRepository';

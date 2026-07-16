@@ -14,8 +14,9 @@ import { AppText, Button, Card, EmptyState, ErrorState, Input, Screen } from '@/
 import { useTheme } from '@/ui/theme';
 import { MIN_TOUCH_TARGET, radii, spacing } from '@/ui/tokens';
 import { type RecipeDraft, usePlansData } from './usePlansData';
+import { MealPlanner } from './MealPlanner';
 
-type Mode = 'recipes' | 'groceries';
+type Mode = 'recipes' | 'planner' | 'groceries';
 type Props = { now?: Date };
 
 function Chip({
@@ -145,6 +146,11 @@ export function PlansScreen({ now = new Date() }: Props) {
           label={t('plans.recipes')}
           selected={mode === 'recipes'}
           onPress={() => setMode('recipes')}
+        />
+        <Chip
+          label={t('plans.planner.tab')}
+          selected={mode === 'planner'}
+          onPress={() => setMode('planner')}
         />
         <Chip
           label={t('plans.groceries')}
@@ -346,7 +352,7 @@ export function PlansScreen({ now = new Date() }: Props) {
             ))
           )}
         </>
-      ) : (
+      ) : mode === 'groceries' ? (
         <>
           <Card style={styles.card}>
             <AppText variant="headline">{t('plans.grocery.newList')}</AppText>
@@ -441,6 +447,8 @@ export function PlansScreen({ now = new Date() }: Props) {
             <EmptyState title={t('plans.grocery.noLists')} />
           )}
         </>
+      ) : (
+        <MealPlanner now={now} />
       )}
     </Screen>
   );

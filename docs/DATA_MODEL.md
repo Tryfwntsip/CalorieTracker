@@ -78,7 +78,7 @@ serving_name TEXT NULL, serving_grams REAL NULL,
 energy_kcal REAL NULL, protein_g REAL NULL, carbs_g REAL NULL, fat_g REAL NULL,
 sat_fat_g REAL NULL, mono_fat_g REAL NULL, poly_fat_g REAL NULL,
 fiber_g REAL NULL, sugar_g REAL NULL, salt_g REAL NULL, sodium_mg REAL NULL,
-cholesterol_mg REAL NULL, micros_json TEXT NULL (JSON, canonical keys — §8),
+cholesterol_mg REAL NULL, micros_json TEXT NULL (JSON, canonical keys — §9),
 created_at TEXT, updated_at TEXT
 UNIQUE(source, external_id) WHERE external_id IS NOT NULL
 INDEX idx_foods_barcode ON foods(barcode)
@@ -282,31 +282,59 @@ combined into grams only when both have a resolved gram amount. Manual items
 merge by an accent-insensitive normalized label; otherwise they remain separate.
 Checked state is preserved only when every merged source row was checked.
 
-## 6. Later-milestone tables (introduced by their own migrations)
+## 6. M9 weekly meal planning
 
-- **M9:** `meal_plans`, `meal_plan_entries` (XOR check: recipe/food/template).
+Migration 006 adds one plan root per Monday-keyed week and XOR-validated entries:
+
+```
+meal_plans(
+  id TEXT PK, week_start TEXT UNIQUE,
+  created_at TEXT, updated_at TEXT
+)
+meal_plan_entries(
+  id TEXT PK,
+  plan_id TEXT REFERENCES meal_plans(id) ON DELETE CASCADE,
+  day_date TEXT, section TEXT REFERENCES meal_sections(id) ON UPDATE CASCADE,
+  recipe_id TEXT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+  food_id TEXT NULL REFERENCES foods(id) ON DELETE CASCADE,
+  template_id TEXT NULL REFERENCES meal_templates(id) ON DELETE CASCADE,
+  quantity REAL, position INTEGER, created_at TEXT, updated_at TEXT,
+  CHECK(exactly one of recipe_id, food_id, template_id is non-NULL),
+  UNIQUE(plan_id, day_date, section, position)
+)
+```
+
+The app uses Monday as the stable local week key. A slot can contain a recipe
+(quantity in servings), a food (quantity in grams), or a “My meal” template
+(quantity as a multiplier). Logging snapshots the current nutrients into normal
+diary entries. Grocery generation expands every source, scales it to the planned
+quantity, and applies the M8 unit-aware combining rules. Copy week replaces the
+target week's entries transactionally, so a partial copy cannot be observed.
+
+## 7. Later-milestone tables (introduced by their own migrations)
+
 - **M10:** `fasting_plans`, `fasting_sessions`.
 - **M12 (optional):** `photo_analyses` (result JSON, confidence, confirmed entry ids; image kept only with opt-in).
 
 Column shapes follow the same conventions; each lands with its milestone and its own migration + tests.
 
-## 7. Migration discipline
+## 8. Migration discipline
 
 - `src/db/migrations/index.ts` exports the ordered list; the runner (`src/db/migrate.ts`) wraps each pending migration in a transaction, applies in order, sets `PRAGMA user_version = n`.
 - A failing migration rolls back, leaves the previous `user_version`, and surfaces a typed error (tested).
 - Destructive column changes use the SQLite table-rebuild recipe (new table → copy → drop → rename) inside one transaction.
 - Tests cover: fresh install → latest; every stepwise upgrade path from each released version; idempotent re-run.
 
-## 8. Canonical nutrient model
+## 9. Canonical nutrient model
 
 Unchanged in spirit from the original design: fixed macro columns + `micros_json` restricted to canonical keys (`vit_a_ug, vit_c_mg, vit_d_ug, vit_e_mg, vit_k_ug, thiamin_mg, riboflavin_mg, niacin_mg, vit_b6_mg, folate_ug, vit_b12_ug, calcium_mg, iron_mg, magnesium_mg, potassium_mg, zinc_mg, phosphorus_mg, selenium_ug, iodine_ug`), Zod-enforced (`src/domain/schemas/nutrients.ts`). Missing = `NULL`/absent, never 0. Provider mappings (OFF → canonical) live with the OFF adapter and are fixture-tested.
 
-## 9. Seed data
+## 10. Seed data
 
 - **Dev-only** (`src/db/seed/dev.ts`): a small set of original Greek example foods with portions + one demo diary day; runs only in `__DEV__`, only when all relevant tables are empty, and is idempotent.
 - **Production catalog** (M5+): curated Greek foods and 25 bilingual M8 recipes shipped as versioned seed migrations (originally authored; no scraped/proprietary data).
 
-## 10. Aggregation for analytics (M7)
+## 11. Aggregation for analytics (M7)
 
 Daily SQL aggregates over `diary_entries`, `water_records`, and `steps_logs`, plus the
 already-daily `weight_records`, power charts. Queries stay in
@@ -317,7 +345,7 @@ nutrition query, then weekday overrides are applied by the pure progress domain
 calculation. The UI requests only the selected bounded range (maximum 730 days),
 so raw diary/water/steps event rows are never fanned out to JavaScript.
 
-## 11. Implementation decisions
+## 12. Implementation decisions
 
 - SQLite cannot express strict ISO-8601 or real-calendar validation cleanly with portable `CHECK` syntax, so date/timestamp shape is enforced by Zod on every repository read; enum, range, uniqueness, and relationship rules remain database constraints.
 - `food_portions` are deleted with their food (`CASCADE`). Historical diary entries and cached scan records keep their event rows when a food is removed, but their food reference becomes `NULL` (`SET NULL`). Deleting a diary day deletes its entries (`CASCADE`).

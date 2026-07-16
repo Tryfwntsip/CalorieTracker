@@ -70,5 +70,8 @@ Status: Phase 1. Binding minimums; every milestone's acceptance criteria include
   favorite/cascade behavior, table-driven per-serving nutrition with unknown
   preservation, dietary/allergen filtering, unit-aware grocery combining, and a
   seeded-recipe → diary + grocery-list UI journey.
+- Meal planning (M9): deterministic Monday/week shifting, SQLite XOR and
+  slot-replacement constraints, transactional copy-week behavior, and a complete
+  planned recipe → diary → combined groceries → copied week UI journey.
 - Accessibility: automated a11y label lint + manual VoiceOver/TalkBack pass per milestone touching UI; dynamic-type 130% screenshot review.
 - Localization: pseudo-locale check for truncation; native review of Greek copy before release.

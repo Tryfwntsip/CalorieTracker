@@ -13,6 +13,8 @@ import {
   mealSectionSchema,
   mealTemplateItemSchema,
   mealTemplateSchema,
+  mealPlanSchema,
+  mealPlanEntrySchema,
   profileGoalHistorySchema,
   profileSchema,
   scannedProductSchema,
@@ -36,6 +38,8 @@ export type FoodFavorite = z.output<typeof foodFavoriteSchema>;
 export type FoodRecent = z.output<typeof foodRecentSchema>;
 export type MealTemplate = z.output<typeof mealTemplateSchema>;
 export type MealTemplateItem = z.output<typeof mealTemplateItemSchema>;
+export type MealPlan = z.output<typeof mealPlanSchema>;
+export type MealPlanEntry = z.output<typeof mealPlanEntrySchema>;
 export type DiaryDay = z.output<typeof diaryDaySchema>;
 export type DiaryEntry = z.output<typeof diaryEntrySchema>;
 export type MealSection = z.output<typeof mealSectionSchema>;
@@ -57,6 +61,11 @@ export type FoodPortionWrite = FoodPortion;
 export type FoodOverrideWrite = Omit<FoodOverride, 'updatedAt'>;
 export type MealTemplateWrite = Omit<MealTemplate, 'createdAt' | 'updatedAt'>;
 export type MealTemplateItemWrite = Omit<MealTemplateItem, 'createdAt'>;
+export type MealPlanWrite = Omit<MealPlan, 'createdAt' | 'updatedAt'>;
+export type MealPlanEntryWrite = Omit<
+  MealPlanEntry,
+  'label' | 'labelEl' | 'createdAt' | 'updatedAt'
+>;
 export type DiaryDayWrite = Omit<DiaryDay, 'createdAt' | 'updatedAt'>;
 export type DiaryEntryWrite = Omit<
   DiaryEntry,

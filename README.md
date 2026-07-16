@@ -1,5 +1,8 @@
 # CalorieTracker (working title)
 
+[![CI](https://github.com/Tryfwntsip/CalorieTracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Tryfwntsip/CalorieTracker/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Personal, **single-user, local-first** nutrition & lifestyle tracker for iOS/Android: food diary, calorie/macro goals, local Greek food database (+ optional Open Food Facts lookup), barcode scanning, recipes & meal planning, intermittent fasting, health-platform sync, and progress analytics. Greek + English, metric units, dark/light themes.
 
 **No accounts, no backend, no cloud, no API keys, no ads, no telemetry.** All data lives in the on-device SQLite database, which is the primary and authoritative store. The app works fully offline except optional lookups (e.g. a previously unknown barcode).
@@ -38,6 +41,8 @@ Personal, **single-user, local-first** nutrition & lifestyle tracker for iOS/And
 | [docs/ROADMAP.md](docs/ROADMAP.md)                           | Milestones with scope/tests/acceptance               |
 | [docs/TEST_STRATEGY.md](docs/TEST_STRATEGY.md)               | Test layers, E2E journeys, gates                     |
 | [docs/API_AND_DATA_SOURCES.md](docs/API_AND_DATA_SOURCES.md) | Local Greek DB, Open Food Facts, optional providers  |
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a change and [SECURITY.md](SECURITY.md) for private vulnerability reporting.
 
 ## Stack
 
@@ -80,3 +85,7 @@ npm test
 ## Disclaimer
 
 All calorie and nutrient values are informational estimates, not medical advice.
+
+## License
+
+Released under the [MIT License](LICENSE).

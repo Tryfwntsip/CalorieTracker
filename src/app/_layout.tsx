@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { DatabaseProvider } from '@/db/DatabaseProvider';
+import { ProfileProvider, useProfile } from '@/features/profile/ProfileProvider';
 import { initI18n } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
 import { ThemeProvider, useTheme } from '@/ui/theme';
@@ -13,6 +14,7 @@ void SplashScreen.preventAutoHideAsync();
 
 function RootNavigator() {
   const { scheme, colors } = useTheme();
+  const { profile } = useProfile();
   return (
     <>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
@@ -21,7 +23,14 @@ function RootNavigator() {
           headerShown: false,
           contentStyle: { backgroundColor: colors.background },
         }}
-      />
+      >
+        <Stack.Protected guard={profile === null}>
+          <Stack.Screen name="(onboarding)" />
+        </Stack.Protected>
+        <Stack.Protected guard={profile !== null}>
+          <Stack.Screen name="(tabs)" />
+        </Stack.Protected>
+      </Stack>
     </>
   );
 }
@@ -47,7 +56,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider>
         <DatabaseProvider>
-          <RootNavigator />
+          <ProfileProvider>
+            <RootNavigator />
+          </ProfileProvider>
         </DatabaseProvider>
       </ThemeProvider>
     </SafeAreaProvider>

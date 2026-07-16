@@ -33,7 +33,7 @@ Expo SDK 57 + TS strict + Expo Router; tokens/themes; i18n en/el; UI kit; 5-tab 
 
 **Depends on:** M1. **Feeds:** everything.
 
-## M3 — Personal profile & calorie targets (local, no auth)
+## M3 — Personal profile & calorie targets (local, no auth) ✅
 
 **Scope:** onboarding + editable Profile section storing locally: age (stored as date of birth), biological sex or "prefer not to specify", height, current weight, target weight, activity level, goal type (lose/maintain/gain/build muscle), weekly target rate, calorie target, protein/carb/fat targets, metric units, language preference (el/en, already persisted — moves into settings table). Mifflin–St Jeor calculator + macro splits as pure domain functions; **guardrails** (block dangerous targets, confirm aggressive ones); manual override of computed targets within guardrails; disclaimers.
 **Tests:** calculator matrix incl. "unspecified" sex averaging; guardrail boundaries; profile repository round-trips; onboarding flow component tests.

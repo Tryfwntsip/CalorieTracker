@@ -6,6 +6,7 @@ import {
   diaryEntrySchema,
   foodPortionSchema,
   foodSchema,
+  profileGoalHistorySchema,
   profileSchema,
   scannedProductSchema,
   settingsSchema,
@@ -14,6 +15,7 @@ import {
 } from '@/schemas';
 
 export type Profile = z.output<typeof profileSchema>;
+export type ProfileGoalHistory = z.output<typeof profileGoalHistorySchema>;
 export type Settings = z.output<typeof settingsSchema>;
 export type Food = z.output<typeof foodSchema>;
 export type FoodPortion = z.output<typeof foodPortionSchema>;

@@ -47,8 +47,8 @@ Profile is editable at any time; goal changes are **versioned** (history kept) s
 ## 5. Energy & macro calculation (F2)
 
 - BMR: Mifflin–St Jeor. Activity multipliers: 1.2 / 1.375 / 1.55 / 1.725 / 1.9.
-- Goal adjustment: 1 kg body mass ≈ 7,700 kcal; daily delta = weeklyRateKg × 7700 / 7.
-- Macro split defaults by goal type (e.g. muscle-building raises protein to 1.8 g/kg); user-adjustable within safe bounds; protein floor 0.8 g/kg.
+- Goal adjustment: 1 kg body mass ≈ 7,700 kcal; daily delta = signed weeklyRateKg × 7700 / 7. The UI accepts a positive pace; loss is persisted negative, gain/build-muscle positive, and maintenance zero.
+- Macro defaults: protein 1.6 / 1.4 / 1.6 / 1.8 g/kg for lose / maintain / gain / build-muscle, fat 30% of target calories, and carbohydrates use the remaining calories. Values are user-adjustable before save; all must be non-negative and the protein floor is 0.8 g/kg.
 - Per-weekday overrides: users may set different calorie targets for selected weekdays (e.g. training days). Stored as goal rows; diary always shows the target effective for that date.
 - All formulas are pure functions with table-driven tests; documented in code with sources.
 

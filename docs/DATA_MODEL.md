@@ -31,6 +31,27 @@ created_at TEXT, updated_at TEXT
 
 Age is derived from `date_of_birth` (stays correct over time). `current_weight_kg` mirrors the latest weight_record (repository keeps it in sync). Weekday calorie overrides arrive with M4 (`settings.weekday_calorie_overrides` JSON).
 
+`weekly_rate_kg` is signed internally: negative for loss, positive for gain/build-muscle, and zero for maintenance. The UI accepts a positive pace and derives the sign from `goal_type`.
+
+**profile_goal_history** — M3 append-only target versions
+
+```
+version INTEGER PK AUTOINCREMENT,
+profile_id INTEGER NOT NULL CHECK(profile_id=1)
+  REFERENCES profile(id) ON DELETE CASCADE,
+effective_at TEXT NOT NULL,
+goal_type TEXT NULL, weekly_rate_kg REAL NULL,
+current_weight_kg REAL NULL, target_weight_kg REAL NULL,
+activity_level INTEGER NULL,
+calorie_target INTEGER NULL, protein_target_g INTEGER NULL,
+carbs_target_g INTEGER NULL, fat_target_g INTEGER NULL,
+created_at TEXT NOT NULL
+INDEX idx_profile_goal_history_effective
+  ON profile_goal_history(effective_at, version)
+```
+
+The M3 migration snapshots an existing M2 profile on upgrade. Profile create/update and history append occur in one transaction; deleting the singleton profile cascades its history.
+
 **settings** — exactly one row (`CHECK (id = 1)`)
 
 ```
@@ -43,7 +64,7 @@ diary_section_order TEXT NULL (JSON), weekday_calorie_overrides TEXT NULL (JSON)
 created_at TEXT, updated_at TEXT
 ```
 
-(Theme/language currently live in AsyncStorage from M1; M2/M3 migrate them here as the single source of truth.)
+Theme and language are authoritative here. AsyncStorage retains only a synchronized startup cache so the saved appearance can render before SQLite opens.
 
 **foods**
 

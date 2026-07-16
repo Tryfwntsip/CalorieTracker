@@ -33,7 +33,7 @@ CalorieTracker/
 ├── src/
 │   ├── app/                  # Expo Router routes ONLY (thin)
 │   │   ├── (tabs)/           # today (index), diary, progress, plans, profile
-│   │   ├── (onboarding)/     # M3
+│   │   ├── (onboarding)/     # guarded local profile setup
 │   │   └── (modals)/         # food-search, barcode, editors (M5+)
 │   ├── ui/                   # design system: tokens/, components/, theme/
 │   ├── features/<feature>/   # screen containers, feature hooks/components
@@ -77,6 +77,9 @@ src/app routes → src/features → src/services + src/repositories → src/doma
 - Analytics on long histories via SQL aggregate queries (M7) — raw rows never fanned out to JS for charting.
 - App startup is gated by `DatabaseProvider`: tabs do not render until initialization succeeds. A localized loading state and safe, retryable error state preserve the M1 theme and navigation.
 - Theme/language live in `settings`; the small M1 AsyncStorage values are imported on first M2 launch and retained only as a pre-database startup cache. Preference changes update both, with SQLite authoritative.
+- `ProfileProvider` loads the singleton profile after database initialization. Route guards show onboarding until the profile exists and expose the five-tab shell only after a valid, guarded target is saved.
+- Goal calculations and safety rules are pure functions under `src/domain/goals`; `src/services/profile.ts` re-runs all validation and guardrails before persistence, so screens cannot bypass a blocked or unconfirmed target.
+- Every saved profile target appends a `profile_goal_history` version in the same SQLite transaction as the current-profile update.
 
 ### Integration-test runtime
 

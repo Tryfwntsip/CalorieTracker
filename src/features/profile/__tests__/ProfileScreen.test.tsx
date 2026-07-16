@@ -1,7 +1,27 @@
 import { act, fireEvent, screen } from '@testing-library/react-native';
 
 import { ProfileScreen } from '@/features/profile/ProfileScreen';
+import type { Database } from '@/db/types';
 import { renderWithProviders, testI18n } from '@/test/render';
+import type { Profile } from '@/types';
+
+const profile: Profile = {
+  id: 1,
+  dateOfBirth: '1990-05-12',
+  sex: 'unspecified',
+  heightCm: 175,
+  currentWeightKg: 75,
+  targetWeightKg: 70,
+  activityLevel: 3,
+  goalType: 'maintain',
+  weeklyRateKg: 0,
+  calorieTarget: 2200,
+  proteinTargetG: 100,
+  carbsTargetG: 260,
+  fatTargetG: 75,
+  createdAt: '2026-07-16T08:00:00.000Z',
+  updatedAt: '2026-07-16T08:00:00.000Z',
+};
 
 describe('ProfileScreen', () => {
   afterEach(async () => {
@@ -11,21 +31,32 @@ describe('ProfileScreen', () => {
   });
 
   it('shows appearance settings and the medical disclaimer', async () => {
-    await renderWithProviders(<ProfileScreen />);
+    await renderWithProviders(<ProfileScreen />, { profile });
+    expect(screen.getByText('Your targets')).toBeTruthy();
     expect(screen.getByText('Appearance')).toBeTruthy();
     expect(screen.getByText(/not medical advice/)).toBeTruthy();
   });
 
   it('selects a theme preference', async () => {
-    await renderWithProviders(<ProfileScreen />);
+    await renderWithProviders(<ProfileScreen />, { profile });
     const dark = screen.getByRole('radio', { name: 'Dark' });
     await fireEvent.press(dark);
     expect(screen.getByRole('radio', { name: 'Dark' })).toBeSelected();
   });
 
   it('switches the app language to Greek', async () => {
-    await renderWithProviders(<ProfileScreen />);
+    await renderWithProviders(<ProfileScreen />, { profile });
     await fireEvent.press(screen.getByRole('radio', { name: 'Ελληνικά' }));
     expect(await screen.findByText('Εμφάνιση')).toBeTruthy();
+  });
+
+  it('opens the editable profile flow', async () => {
+    await renderWithProviders(<ProfileScreen />, {
+      profile,
+      database: {} as Database,
+    });
+    await fireEvent.press(screen.getByRole('button', { name: 'Edit' }));
+    expect(screen.getByText('Edit profile and targets')).toBeTruthy();
+    expect(screen.getByDisplayValue('1990-05-12')).toBeTruthy();
   });
 });

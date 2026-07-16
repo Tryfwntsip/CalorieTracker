@@ -1,9 +1,12 @@
 import Constants from 'expo-constants';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { ProfileForm } from '@/features/profile/ProfileForm';
+import { useProfile } from '@/features/profile/ProfileProvider';
 import { asAppLanguage, persistLanguagePreference, type AppLanguage } from '@/lib/i18n';
-import { AppText, Card } from '@/ui/components';
+import { AppText, Button, Card, ErrorState } from '@/ui/components';
 import { useTheme, type ThemePreference } from '@/ui/theme';
 import { MIN_TOUCH_TARGET, radii, spacing } from '@/ui/tokens';
 import { Screen } from '@/ui/components/Screen';
@@ -52,6 +55,8 @@ function Segmented<T extends string>({
 export function ProfileScreen() {
   const { t, i18n } = useTranslation();
   const { preference, setPreference } = useTheme();
+  const { profile, setProfile } = useProfile();
+  const [editing, setEditing] = useState(false);
   const language = asAppLanguage(i18n.language);
 
   const changeLanguage = (lng: AppLanguage) => {
@@ -69,8 +74,83 @@ export function ProfileScreen() {
     { value: 'el', label: t('profile.language.el') },
   ];
 
+  if (!profile) {
+    return (
+      <Screen>
+        <ErrorState title={t('profile.loadErrorTitle')} body={t('profile.loadErrorBody')} />
+      </Screen>
+    );
+  }
+
+  if (editing) {
+    return (
+      <ProfileForm
+        mode="edit"
+        initialProfile={profile}
+        onSaved={(saved) => {
+          setProfile(saved);
+          setEditing(false);
+        }}
+        onCancel={() => setEditing(false)}
+      />
+    );
+  }
+
   return (
     <Screen>
+      <Card style={styles.card}>
+        <View style={styles.profileHeading}>
+          <View style={styles.headingText}>
+            <AppText variant="headline">{t('profile.personalTitle')}</AppText>
+            <AppText color="secondary">
+              {t('profile.personalSummary', {
+                calories: profile.calorieTarget,
+                weight: profile.currentWeightKg,
+              })}
+            </AppText>
+          </View>
+          <Button
+            label={t('profile.editAction')}
+            onPress={() => setEditing(true)}
+            variant="secondary"
+          />
+        </View>
+        <View style={styles.targetGrid}>
+          <View style={styles.target}>
+            <AppText variant="caption" color="secondary">
+              {t('profile.form.calories')}
+            </AppText>
+            <AppText variant="bodyStrong">
+              {t('profile.targetCalories', { value: profile.calorieTarget })}
+            </AppText>
+          </View>
+          <View style={styles.target}>
+            <AppText variant="caption" color="secondary">
+              {t('profile.form.protein')}
+            </AppText>
+            <AppText variant="bodyStrong">
+              {t('profile.targetGrams', { value: profile.proteinTargetG })}
+            </AppText>
+          </View>
+          <View style={styles.target}>
+            <AppText variant="caption" color="secondary">
+              {t('profile.form.carbs')}
+            </AppText>
+            <AppText variant="bodyStrong">
+              {t('profile.targetGrams', { value: profile.carbsTargetG })}
+            </AppText>
+          </View>
+          <View style={styles.target}>
+            <AppText variant="caption" color="secondary">
+              {t('profile.form.fat')}
+            </AppText>
+            <AppText variant="bodyStrong">
+              {t('profile.targetGrams', { value: profile.fatTargetG })}
+            </AppText>
+          </View>
+        </View>
+      </Card>
+
       <Card style={styles.card}>
         <AppText variant="headline">{t('profile.appearance')}</AppText>
         <View style={styles.setting}>
@@ -112,6 +192,15 @@ export function ProfileScreen() {
 
 const styles = StyleSheet.create({
   card: { gap: spacing.md },
+  profileHeading: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  headingText: { flex: 1, gap: spacing.xxs },
+  targetGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  target: { minWidth: '45%', flexGrow: 1, gap: spacing.xxs },
   setting: { gap: spacing.xs },
   segmented: {
     flexDirection: 'row',

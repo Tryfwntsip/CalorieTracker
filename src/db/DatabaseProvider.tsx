@@ -10,7 +10,7 @@ import { AppText, ErrorState } from '@/ui/components';
 import { useTheme } from '@/ui/theme';
 import { spacing } from '@/ui/tokens';
 
-const DatabaseContext = createContext<Database | null>(null);
+export const DatabaseContext = createContext<Database | null>(null);
 
 type State = { status: 'loading' } | { status: 'error' } | { status: 'ready'; database: Database };
 

@@ -1,6 +1,6 @@
 import type { Database } from '@/db/types';
-import { profileSchema } from '@/schemas';
-import type { Profile, ProfileWrite } from '@/types';
+import { profileGoalHistorySchema, profileSchema } from '@/schemas';
+import type { Profile, ProfileGoalHistory, ProfileWrite } from '@/types';
 import { assertChanged, mapRepositoryError, parseRecord } from '@/repositories/errors';
 import { systemClock, type Clock } from '@/repositories/shared';
 
@@ -14,8 +14,21 @@ SELECT id, date_of_birth AS dateOfBirth, sex, height_cm AS heightCm,
 FROM profile WHERE id = 1
 `;
 
+const selectGoalHistory = `
+SELECT version, profile_id AS profileId, effective_at AS effectiveAt,
+  goal_type AS goalType, weekly_rate_kg AS weeklyRateKg,
+  current_weight_kg AS currentWeightKg, target_weight_kg AS targetWeightKg,
+  activity_level AS activityLevel, calorie_target AS calorieTarget,
+  protein_target_g AS proteinTargetG, carbs_target_g AS carbsTargetG,
+  fat_target_g AS fatTargetG, created_at AS createdAt
+FROM profile_goal_history
+WHERE profile_id = 1
+ORDER BY effective_at, version
+`;
+
 export interface ProfileRepository {
   get(): Promise<Profile | null>;
+  listGoalHistory(): Promise<ProfileGoalHistory[]>;
   create(profile: ProfileWrite): Promise<Profile>;
   update(profile: ProfileWrite): Promise<Profile>;
   delete(): Promise<void>;
@@ -50,21 +63,59 @@ export function createProfileRepository(
       profile.fatTargetG,
     ] as const;
 
+  const appendGoalHistory = async (
+    transaction: Database,
+    profile: ProfileWrite,
+    timestamp: string,
+  ): Promise<void> => {
+    await transaction.runAsync(
+      `INSERT INTO profile_goal_history (
+        profile_id, effective_at, goal_type, weekly_rate_kg, current_weight_kg,
+        target_weight_kg, activity_level, calorie_target, protein_target_g,
+        carbs_target_g, fat_target_g, created_at
+      ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      timestamp,
+      profile.goalType,
+      profile.weeklyRateKg,
+      profile.currentWeightKg,
+      profile.targetWeightKg,
+      profile.activityLevel,
+      profile.calorieTarget,
+      profile.proteinTargetG,
+      profile.carbsTargetG,
+      profile.fatTargetG,
+      timestamp,
+    );
+  };
+
   return {
     get,
+    async listGoalHistory() {
+      try {
+        const rows = await database.getAllAsync<unknown>(selectGoalHistory);
+        return rows.map((row) =>
+          parseRecord(profileGoalHistorySchema, row, 'profile_goal_history'),
+        );
+      } catch (error: unknown) {
+        throw mapRepositoryError(error, 'profile_goal_history');
+      }
+    },
     async create(profile) {
       try {
         const now = clock.now();
-        await database.runAsync(
-          `INSERT INTO profile (
-            id, date_of_birth, sex, height_cm, current_weight_kg, target_weight_kg,
-            activity_level, goal_type, weekly_rate_kg, calorie_target,
-            protein_target_g, carbs_target_g, fat_target_g, created_at, updated_at
-          ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          ...writeParams(profile),
-          now,
-          now,
-        );
+        await database.withTransactionAsync(async (transaction) => {
+          await transaction.runAsync(
+            `INSERT INTO profile (
+              id, date_of_birth, sex, height_cm, current_weight_kg, target_weight_kg,
+              activity_level, goal_type, weekly_rate_kg, calorie_target,
+              protein_target_g, carbs_target_g, fat_target_g, created_at, updated_at
+            ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ...writeParams(profile),
+            now,
+            now,
+          );
+          await appendGoalHistory(transaction, profile, now);
+        });
         const created = await get();
         if (!created) throw new Error('Inserted profile was not found.');
         return created;
@@ -74,17 +125,21 @@ export function createProfileRepository(
     },
     async update(profile) {
       try {
-        const result = await database.runAsync(
-          `UPDATE profile SET
-            date_of_birth = ?, sex = ?, height_cm = ?, current_weight_kg = ?,
-            target_weight_kg = ?, activity_level = ?, goal_type = ?, weekly_rate_kg = ?,
-            calorie_target = ?, protein_target_g = ?, carbs_target_g = ?, fat_target_g = ?,
-            updated_at = ?
-          WHERE id = 1`,
-          ...writeParams(profile),
-          clock.now(),
-        );
-        assertChanged(result.changes, 'profile');
+        const now = clock.now();
+        await database.withTransactionAsync(async (transaction) => {
+          const result = await transaction.runAsync(
+            `UPDATE profile SET
+              date_of_birth = ?, sex = ?, height_cm = ?, current_weight_kg = ?,
+              target_weight_kg = ?, activity_level = ?, goal_type = ?, weekly_rate_kg = ?,
+              calorie_target = ?, protein_target_g = ?, carbs_target_g = ?, fat_target_g = ?,
+              updated_at = ?
+            WHERE id = 1`,
+            ...writeParams(profile),
+            now,
+          );
+          assertChanged(result.changes, 'profile');
+          await appendGoalHistory(transaction, profile, now);
+        });
         const updated = await get();
         if (!updated) throw new Error('Updated profile was not found.');
         return updated;

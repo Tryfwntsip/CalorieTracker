@@ -114,10 +114,15 @@ describe('repositories', () => {
     expect(updatedProfile.updatedAt).toBe(secondTimestamp);
     expect(updatedSettings.theme).toBe('dark');
     expect(updatedSettings.updatedAt).toBe(secondTimestamp);
+    expect(await profiles.listGoalHistory()).toMatchObject([
+      { version: 1, calorieTarget: 2100, effectiveAt: firstTimestamp },
+      { version: 2, calorieTarget: 2200, effectiveAt: secondTimestamp },
+    ]);
 
     await profiles.delete();
     await settings.delete();
     await expect(profiles.get()).resolves.toBeNull();
+    await expect(profiles.listGoalHistory()).resolves.toEqual([]);
     await expect(settings.get()).resolves.toBeNull();
   });
 

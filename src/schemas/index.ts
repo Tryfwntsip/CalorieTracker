@@ -4,5 +4,6 @@ export * from '@/schemas/food';
 export * from '@/schemas/foodTracking';
 export * from '@/schemas/profile';
 export * from '@/schemas/profileForm';
+export * from '@/schemas/progress';
 export * from '@/schemas/records';
 export * from '@/schemas/settings';

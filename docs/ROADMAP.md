@@ -65,7 +65,7 @@ Expo SDK 57 + TS strict + Expo Router; tokens/themes; i18n en/el; UI kit; 5-tab 
 **Acceptance:** known barcode resolves **offline**; unknown barcode resolves online in <10 s and is cached; history screen lists scans; airplane-mode scan of unknown barcode explains gracefully.
 **Depends on:** M5.
 
-## M7 — Progress & charts
+## M7 — Progress & charts ✅
 
 Weight (trend line), calories vs target, water, steps, macros; weekly/monthly averages; recorded/calculated/estimated labeling; textual summaries; 2-year performance via SQL aggregates on SQLite; chart library final pick.
 **Depends on:** M4 (M3 targets).
@@ -116,7 +116,7 @@ M1 → M2 → M3 → M4 → {M5, M7, M10, M11} ; M5 → {M6, M8, M12*} ; M8 → 
 | Decision                                                    | Decide at                                      |
 | ----------------------------------------------------------- | ---------------------------------------------- |
 | App name & final branding/icon                              | ≤M14                                           |
-| Chart library                                               | M7                                             |
+| Chart library                                               | Decided M7: focused native SVG charts          |
 | Vision provider + whether M12 happens at all                | M12 (user's call)                              |
 | Health module libraries                                     | M11 spike                                      |
 | SQLCipher (encrypted DB)                                    | post-M14 if desired                            |

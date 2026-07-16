@@ -62,5 +62,9 @@ Status: Phase 1. Binding minimums; every milestone's acceptance criteria include
 ## 7. Non-functional checks
 
 - Performance: startup + diary-interaction timing measured in M14 (and spot-checked from M3) on a mid-range Android device profile; chart rendering with 2 years of synthetic data.
+- Progress (M7): table-driven EMA, linear weekly-rate, target-override, and
+  logged-day-average tests; real-SQLite aggregate coverage verifies tombstone
+  exclusion and daily water/steps semantics; the Progress screen has a
+  provider-backed happy-path render test.
 - Accessibility: automated a11y label lint + manual VoiceOver/TalkBack pass per milestone touching UI; dynamic-type 130% screenshot review.
 - Localization: pseudo-locale check for truncation; native review of Greek copy before release.

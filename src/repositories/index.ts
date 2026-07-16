@@ -6,6 +6,7 @@ export * from '@/repositories/healthRecordRepository';
 export * from '@/repositories/mealSectionRepository';
 export * from '@/repositories/mealTemplateRepository';
 export * from '@/repositories/profileRepository';
+export * from '@/repositories/progressRepository';
 export * from '@/repositories/settingsRepository';
 export * from '@/repositories/shared';
 export * from '@/repositories/activityRepository';

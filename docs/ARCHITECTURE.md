@@ -18,7 +18,7 @@ The device's **SQLite database is the primary and authoritative store**. There i
 | Local async state | Feature hooks over repositories; explicit reload after local writes   | small, offline-only data sets; no server cache to reconcile |
 | UI state          | Component state / small Zustand slices if needed                      | minimal                                                     |
 | i18n              | i18next + expo-localization                                           | en/el                                                       |
-| Charts            | Victory Native or equivalent (final pick M7)                          | perf on long histories                                      |
+| Charts            | Small native SVG charts (`react-native-svg`, already in Expo stack)   | no chart dependency; accessible textual summaries           |
 | Testing           | Jest (jest-expo) + RNTL + real SQLite integration tests + Maestro E2E | see TEST_STRATEGY                                           |
 | Lint/format       | ESLint (zero warnings) + Prettier                                     | CI gate                                                     |
 
@@ -128,19 +128,19 @@ Dev: Expo dev tools + `src/lib/logger` (leveled, redacting). **No third-party cr
 
 ## 12. Decisions log
 
-| #   | Decision                                                                                 | Status                                                    |
-| --- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| D1  | Single app repo, no monorepo                                                             | Accepted                                                  |
-| D2  | **SQLite is the primary, authoritative database; no backend, no sync**                   | Accepted (2026-07-16, supersedes the old Supabase design) |
-| D3  | ~~Supabase/Edge Functions gateway~~                                                      | **Dropped** — no backend                                  |
-| D4  | Nutrients per 100 g/ml canonical + JSON micros                                           | Accepted                                                  |
-| D5  | Diary entries snapshot nutrients at log time                                             | Accepted                                                  |
-| D6  | Charts lib final pick                                                                    | Deferred to M7                                            |
-| D8  | App name/branding                                                                        | Deferred                                                  |
-| D9  | Personal use only: no accounts/auth/cloud/subscriptions/ads/telemetry/store distribution | Accepted                                                  |
-| D10 | OFF called directly (keyless); USDA deferred; vision key user-supplied at runtime        | Accepted                                                  |
-| D11 | Repository-backed feature hooks instead of a server-state cache for the local-only diary | Accepted (M4; avoids an unnecessary dependency)           |
-| D12 | Normalized search-key columns instead of locale-dependent SQLite collation               | Accepted (M5; deterministic accent-insensitive en/el)     |
-| D13 | OFF plain-text search uses its explicit legacy endpoint, never search-as-you-type        | Accepted (M5; current OFF v2/v3 omit full-text search)    |
-| D14 | Barcode variants normalize to checksum-validated GTIN-13 before lookup or persistence    | Accepted (M6; one stable local/cache key)                 |
-| D15 | Camera permission is user-triggered; manual barcode entry remains permanently available  | Accepted (M6; minimal permission and graceful fallback)   |
+| #   | Decision                                                                                 | Status                                                      |
+| --- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| D1  | Single app repo, no monorepo                                                             | Accepted                                                    |
+| D2  | **SQLite is the primary, authoritative database; no backend, no sync**                   | Accepted (2026-07-16, supersedes the old Supabase design)   |
+| D3  | ~~Supabase/Edge Functions gateway~~                                                      | **Dropped** — no backend                                    |
+| D4  | Nutrients per 100 g/ml canonical + JSON micros                                           | Accepted                                                    |
+| D5  | Diary entries snapshot nutrients at log time                                             | Accepted                                                    |
+| D6  | Use focused native SVG charts plus textual summaries; SQL prepares chart series          | Decided M7 — avoids another dependency and keeps a11y clear |
+| D8  | App name/branding                                                                        | Deferred                                                    |
+| D9  | Personal use only: no accounts/auth/cloud/subscriptions/ads/telemetry/store distribution | Accepted                                                    |
+| D10 | OFF called directly (keyless); USDA deferred; vision key user-supplied at runtime        | Accepted                                                    |
+| D11 | Repository-backed feature hooks instead of a server-state cache for the local-only diary | Accepted (M4; avoids an unnecessary dependency)             |
+| D12 | Normalized search-key columns instead of locale-dependent SQLite collation               | Accepted (M5; deterministic accent-insensitive en/el)       |
+| D13 | OFF plain-text search uses its explicit legacy endpoint, never search-as-you-type        | Accepted (M5; current OFF v2/v3 omit full-text search)      |
+| D14 | Barcode variants normalize to checksum-validated GTIN-13 before lookup or persistence    | Accepted (M6; one stable local/cache key)                   |
+| D15 | Camera permission is user-triggered; manual barcode entry remains permanently available  | Accepted (M6; minimal permission and graceful fallback)     |

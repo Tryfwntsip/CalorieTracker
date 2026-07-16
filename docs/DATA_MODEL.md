@@ -257,7 +257,14 @@ Unchanged in spirit from the original design: fixed macro columns + `micros_json
 
 ## 9. Aggregation for analytics (M7)
 
-Daily-summary SQL view over diary_entries/water/weight/steps/exercise per day powers charts; queries stay in repositories; 2 years of history must render without materializing raw rows in JS.
+Daily SQL aggregates over `diary_entries`, `water_records`, and `steps_logs`, plus the
+already-daily `weight_records`, power charts. Queries stay in
+`progressRepository`; soft-deleted diary entries are excluded and multiple
+whole-day step origins use `MAX`, not a sum that could double-count steps.
+Historical calorie targets are resolved from `profile_goal_history` inside the
+nutrition query, then weekday overrides are applied by the pure progress domain
+calculation. The UI requests only the selected bounded range (maximum 730 days),
+so raw diary/water/steps event rows are never fanned out to JavaScript.
 
 ## 10. Implementation decisions
 

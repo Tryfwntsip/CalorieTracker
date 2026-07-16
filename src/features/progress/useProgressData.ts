@@ -3,7 +3,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDatabase } from '@/db/DatabaseProvider';
 import { addDays } from '@/domain/dates';
 import { analyzeProgress, type ProgressAnalysis } from '@/domain/progress';
-import { createProgressRepository, createSettingsRepository } from '@/repositories';
+import {
+  createFastingRepository,
+  createProgressRepository,
+  createSettingsRepository,
+} from '@/repositories';
 
 export const progressRanges = {
   week: 7,
@@ -25,14 +29,16 @@ export function useProgressData(toDay: string, range: ProgressRange) {
   const [state, setState] = useState<State>({ status: 'loading' });
   const progress = useMemo(() => createProgressRepository(database), [database]);
   const settings = useMemo(() => createSettingsRepository(database), [database]);
+  const fasting = useMemo(() => createFastingRepository(database), [database]);
   const fromDay = addDays(toDay, -(progressRanges[range] - 1));
 
   const load = useCallback(async () => {
     setState({ status: 'loading' });
     try {
-      const [snapshot, preferences] = await Promise.all([
+      const [snapshot, preferences, activeFastingPlan] = await Promise.all([
         progress.load(fromDay, toDay),
         settings.get(),
+        fasting.getActivePlan(),
       ]);
       if (!preferences) throw new Error('Settings were not found.');
       setState({
@@ -43,6 +49,9 @@ export function useProgressData(toDay: string, range: ProgressRange) {
           snapshot.water,
           snapshot.steps,
           preferences.weekdayCalorieOverrides,
+          snapshot.mood,
+          snapshot.moodTags,
+          activeFastingPlan,
         ),
         fromDay,
         toDay,
@@ -50,7 +59,7 @@ export function useProgressData(toDay: string, range: ProgressRange) {
     } catch {
       setState({ status: 'error' });
     }
-  }, [fromDay, progress, settings, toDay]);
+  }, [fasting, fromDay, progress, settings, toDay]);
 
   useEffect(() => {
     const timer = setTimeout(() => void load(), 0);

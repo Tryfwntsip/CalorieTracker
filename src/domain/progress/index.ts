@@ -6,6 +6,9 @@ import type {
   WaterAggregate,
   WeightAggregate,
 } from '@/schemas/progress';
+import type { MoodTagAggregate } from '@/schemas/fasting';
+import type { FastingPlan } from '@/types';
+import { fastingAdjustedTarget } from '@/domain/fasting';
 
 export type ChartPoint = { dayDate: DayKey; value: number };
 
@@ -26,6 +29,9 @@ export type ProgressAnalysis = {
   weightChangeKg: number | null;
   estimatedWeeklyWeightChangeKg: number | null;
   calorieDays: number;
+  moodPoints: ChartPoint[];
+  averageMood: number | null;
+  moodTags: MoodTagAggregate[];
 };
 
 export function average(values: readonly number[]): number | null {
@@ -68,6 +74,9 @@ export function analyzeProgress(
   water: readonly WaterAggregate[],
   steps: readonly StepsAggregate[],
   overrides: WeekdayCalorieOverrides | null,
+  mood: readonly { dayDate: string; mood: number }[] = [],
+  moodTags: readonly MoodTagAggregate[] = [],
+  activeFastingPlan: FastingPlan | null = null,
 ): ProgressAnalysis {
   const caloriePoints = nutrition.map(({ dayDate, energyKcal }) => ({
     dayDate,
@@ -76,11 +85,21 @@ export function analyzeProgress(
   const targetPoints = nutrition.flatMap(({ dayDate, calorieTarget }) =>
     calorieTarget === null
       ? []
-      : [{ dayDate, value: effectiveCalorieTarget(dayDate, calorieTarget, overrides) }],
+      : [
+          {
+            dayDate,
+            value: fastingAdjustedTarget(
+              effectiveCalorieTarget(dayDate, calorieTarget, overrides),
+              activeFastingPlan,
+              dayDate,
+            ),
+          },
+        ],
   );
   const weightPoints = weights.map(({ dayDate, weightKg }) => ({ dayDate, value: weightKg }));
   const waterPoints = water.map(({ dayDate, amountMl }) => ({ dayDate, value: amountMl }));
   const stepsPoints = steps.map(({ dayDate, steps: value }) => ({ dayDate, value }));
+  const moodPoints = mood.map(({ dayDate, mood: value }) => ({ dayDate, value }));
 
   return {
     caloriePoints,
@@ -100,5 +119,8 @@ export function analyzeProgress(
       weightPoints.length < 2 ? null : weightPoints.at(-1)!.value - weightPoints[0]!.value,
     estimatedWeeklyWeightChangeKg: estimatedWeeklyTrend(weightPoints),
     calorieDays: nutrition.length,
+    moodPoints,
+    averageMood: average(moodPoints.map(({ value }) => value)),
+    moodTags: [...moodTags],
   };
 }

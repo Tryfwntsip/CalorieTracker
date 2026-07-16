@@ -86,6 +86,13 @@ src/app routes → src/features → src/services + src/repositories → src/doma
 - M5 local food search uses migration-maintained, accent-stripped lowercase keys for both English and Greek names. SQLite remains the only catalog queried during normal typing; the optional OFF request runs only after an explicit user action and successful results are cache-through.
 - Curated/OFF corrections are overlay rows in `food_overrides`, preserving the source row. Custom foods remain directly editable user-owned rows. Diary entries always snapshot the effective overlaid nutrients at log time.
 - M6 barcode input is checksum-validated and normalized to GTIN-13 in pure domain code. Lookup orchestration always checks `foods.barcode` and `scanned_products` before the optional eight-second OFF request, then records one history row for every resolved, missing, or unavailable lookup.
+- M10 fasting timers persist absolute start/target/end instants in SQLite, so the timer survives
+  process restarts and duration stays correct across DST. Only one plan and one session may be
+  active. Local notification IDs live with the session so ending it can cancel pending alerts.
+  Permission is requested only when the user starts a fast after explicitly enabling alerts.
+- 5:2 and alternate-day calorie adjustments are pure domain calculations layered after the
+  historical goal and weekday override; the existing 1,200 kcal safety floor remains final.
+  Mood tags use a normalized diary-day join, while progress reads SQL aggregates.
 
 ### Integration-test runtime
 
@@ -121,6 +128,10 @@ Local reads/writes are the only path — there is nothing to sync. Online lookup
 ## 10. Notifications
 
 `expo-notifications`, local scheduled notifications only. A `NotificationScheduler` service reconciles user reminder settings on change/app start. Tone rules per PRODUCT_SPEC §15.
+
+M10 uses only one-off local fasting start/end notifications. It never obtains a push token,
+contacts Expo's push service, or schedules anything until the user enables notifications and
+starts a timer.
 
 ## 11. Observability
 

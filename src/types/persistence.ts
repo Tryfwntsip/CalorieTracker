@@ -26,6 +26,9 @@ import {
   stepsLogSchema,
   weightRecordSchema,
   waterRecordSchema,
+  fastingPlanSchema,
+  fastingSessionSchema,
+  moodTagSchema,
 } from '@/schemas';
 
 export type Profile = z.output<typeof profileSchema>;
@@ -53,6 +56,9 @@ export type Recipe = z.output<typeof recipeSchema>;
 export type RecipeIngredient = z.output<typeof recipeIngredientSchema>;
 export type GroceryList = z.output<typeof groceryListSchema>;
 export type GroceryItem = z.output<typeof groceryItemSchema>;
+export type FastingPlan = z.output<typeof fastingPlanSchema>;
+export type FastingSession = z.output<typeof fastingSessionSchema>;
+export type MoodTag = z.output<typeof moodTagSchema>;
 
 export type ProfileWrite = Omit<Profile, 'id' | 'createdAt' | 'updatedAt'>;
 export type SettingsWrite = Omit<Settings, 'id' | 'createdAt' | 'updatedAt'>;
@@ -85,3 +91,5 @@ export type RecipeIngredientWrite = Omit<
 >;
 export type GroceryListWrite = Omit<GroceryList, 'createdAt' | 'updatedAt'>;
 export type GroceryItemWrite = Omit<GroceryItem, 'createdAt' | 'updatedAt'>;
+export type FastingPlanWrite = Omit<FastingPlan, 'createdAt' | 'updatedAt'>;
+export type FastingSessionWrite = Omit<FastingSession, 'createdAt' | 'updatedAt'>;

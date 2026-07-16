@@ -311,30 +311,67 @@ diary entries. Grocery generation expands every source, scales it to the planned
 quantity, and applies the M8 unit-aware combining rules. Copy week replaces the
 target week's entries transactionally, so a partial copy cannot be observed.
 
-## 7. Later-milestone tables (introduced by their own migrations)
+## 7. M10 fasting and mood
 
-- **M10:** `fasting_plans`, `fasting_sessions`.
+Migration 007 adds persistent fasting configuration and history:
+
+```
+fasting_plans(
+  id TEXT PK, kind TEXT, name TEXT,
+  fasting_minutes INTEGER, eating_minutes INTEGER, start_time TEXT,
+  fasting_weekdays_json TEXT, reduced_target_percent INTEGER,
+  notifications_enabled INTEGER, is_active INTEGER,
+  created_at TEXT, updated_at TEXT
+)
+fasting_sessions(
+  id TEXT PK, plan_id TEXT NULL REFERENCES fasting_plans(id) ON DELETE SET NULL,
+  started_at TEXT, target_end_at TEXT, ended_at TEXT NULL,
+  status TEXT, note TEXT NULL,
+  start_notification_id TEXT NULL, end_notification_id TEXT NULL,
+  created_at TEXT, updated_at TEXT
+)
+mood_tags(
+  id TEXT PK, name TEXT, name_el TEXT, position INTEGER,
+  created_at TEXT, updated_at TEXT
+)
+diary_day_mood_tags(
+  day_date TEXT REFERENCES diary_days(date) ON DELETE CASCADE,
+  tag_id TEXT REFERENCES mood_tags(id) ON DELETE CASCADE,
+  created_at TEXT, PK(day_date, tag_id)
+)
+```
+
+Partial unique indexes permit only one active plan and one active session. Session timestamps
+are absolute ISO-8601 instants, so elapsed duration stays correct through midnight and DST.
+The plan's usual local start time is configuration, not an elapsed-time clock. 5:2 stores
+exactly two selected weekdays; alternate-day behavior is deterministic from the local day key.
+Reduced calorie targets are calculated in the domain layer and clamped to the existing 1,200
+kcal safety floor. Mood tags are a fixed, original bilingual vocabulary; the join table permits
+multiple tags per diary day without changing the existing 1–5 mood score.
+
+## 8. Later-milestone tables (introduced by their own migrations)
+
 - **M12 (optional):** `photo_analyses` (result JSON, confidence, confirmed entry ids; image kept only with opt-in).
 
 Column shapes follow the same conventions; each lands with its milestone and its own migration + tests.
 
-## 8. Migration discipline
+## 9. Migration discipline
 
 - `src/db/migrations/index.ts` exports the ordered list; the runner (`src/db/migrate.ts`) wraps each pending migration in a transaction, applies in order, sets `PRAGMA user_version = n`.
 - A failing migration rolls back, leaves the previous `user_version`, and surfaces a typed error (tested).
 - Destructive column changes use the SQLite table-rebuild recipe (new table → copy → drop → rename) inside one transaction.
 - Tests cover: fresh install → latest; every stepwise upgrade path from each released version; idempotent re-run.
 
-## 9. Canonical nutrient model
+## 10. Canonical nutrient model
 
 Unchanged in spirit from the original design: fixed macro columns + `micros_json` restricted to canonical keys (`vit_a_ug, vit_c_mg, vit_d_ug, vit_e_mg, vit_k_ug, thiamin_mg, riboflavin_mg, niacin_mg, vit_b6_mg, folate_ug, vit_b12_ug, calcium_mg, iron_mg, magnesium_mg, potassium_mg, zinc_mg, phosphorus_mg, selenium_ug, iodine_ug`), Zod-enforced (`src/domain/schemas/nutrients.ts`). Missing = `NULL`/absent, never 0. Provider mappings (OFF → canonical) live with the OFF adapter and are fixture-tested.
 
-## 10. Seed data
+## 11. Seed data
 
 - **Dev-only** (`src/db/seed/dev.ts`): a small set of original Greek example foods with portions + one demo diary day; runs only in `__DEV__`, only when all relevant tables are empty, and is idempotent.
 - **Production catalog** (M5+): curated Greek foods and 25 bilingual M8 recipes shipped as versioned seed migrations (originally authored; no scraped/proprietary data).
 
-## 11. Aggregation for analytics (M7)
+## 12. Aggregation for analytics (M7)
 
 Daily SQL aggregates over `diary_entries`, `water_records`, and `steps_logs`, plus the
 already-daily `weight_records`, power charts. Queries stay in
@@ -345,7 +382,10 @@ nutrition query, then weekday overrides are applied by the pure progress domain
 calculation. The UI requests only the selected bounded range (maximum 730 days),
 so raw diary/water/steps event rows are never fanned out to JavaScript.
 
-## 12. Implementation decisions
+Mood score points and tag-frequency summaries are also aggregated in SQLite for the selected
+progress range; the UI never scans diary-day rows to produce these trends.
+
+## 13. Implementation decisions
 
 - SQLite cannot express strict ISO-8601 or real-calendar validation cleanly with portable `CHECK` syntax, so date/timestamp shape is enforced by Zod on every repository read; enum, range, uniqueness, and relationship rules remain database constraints.
 - `food_portions` are deleted with their food (`CASCADE`). Historical diary entries and cached scan records keep their event rows when a food is removed, but their food reference becomes `NULL` (`SET NULL`). Deleting a diary day deletes its entries (`CASCADE`).

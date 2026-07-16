@@ -80,9 +80,21 @@ Recipe CRUD + seeded original recipes; per-serving nutrition from ingredients; d
 Weekly planner (day × meal slot), one-tap add to diary, grocery list from plan, copy week. All local.
 **Depends on:** M8.
 
-## M10 — Intermittent fasting & mood polish
+## M10 — Intermittent fasting & mood polish ✅
 
-Fasting plans (12:12…20:4, 5:2, ADF, custom), timer, local notifications, history, streaks, safety info; mood tags + trends. All local.
+**Scope:** fasting plans (12:12…20:4, 5:2, alternate-day, custom), persistent timer,
+explicitly enabled local start/end notifications, editable history, notes, completion streaks,
+and static safety information; six bilingual mood tags in the diary plus mood score/tag trends.
+5:2 and alternate-day reduced targets respect weekday overrides and never cross the existing
+1,200 kcal safety floor. Everything remains local.
+**DB changes:** migration 007 adds `fasting_plans`, `fasting_sessions`, `mood_tags`, and
+`diary_day_mood_tags`, including one-active-plan/session constraints and query indexes.
+**Tests:** absolute-time windows across midnight/DST, timer progress, streaks, reduced-target
+rules, real-SQLite plan/session/mood boundaries, migration coverage, and a plan → timer →
+history component journey.
+**Acceptance:** a selected plan and running timer survive relaunch; a session can be ended or
+corrected later; notifications are requested only after opt-in; history/streaks and mood trends
+come from SQLite; en/el parity and offline behavior remain intact.
 **Depends on:** M4.
 
 ## M11 — HealthKit & Health Connect (optional integrations)

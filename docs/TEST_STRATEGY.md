@@ -73,5 +73,9 @@ Status: Phase 1. Binding minimums; every milestone's acceptance criteria include
 - Meal planning (M9): deterministic Monday/week shifting, SQLite XOR and
   slot-replacement constraints, transactional copy-week behavior, and a complete
   planned recipe → diary → combined groceries → copied week UI journey.
+- Fasting and mood (M10): absolute-time windows across midnight/DST, clamped timer
+  progress, completion streaks, 5:2/alternate-day safety-floor target integration,
+  one-active-plan/session constraints, Zod validation, mood-tag aggregation, and a
+  plan → timer → saved-history UI journey.
 - Accessibility: automated a11y label lint + manual VoiceOver/TalkBack pass per milestone touching UI; dynamic-type 130% screenshot review.
 - Localization: pseudo-locale check for truncation; native review of Greek copy before release.

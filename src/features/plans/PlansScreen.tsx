@@ -15,8 +15,9 @@ import { useTheme } from '@/ui/theme';
 import { MIN_TOUCH_TARGET, radii, spacing } from '@/ui/tokens';
 import { type RecipeDraft, usePlansData } from './usePlansData';
 import { MealPlanner } from './MealPlanner';
+import { FastingPanel } from './FastingPanel';
 
-type Mode = 'recipes' | 'planner' | 'groceries';
+type Mode = 'recipes' | 'planner' | 'groceries' | 'fasting';
 type Props = { now?: Date };
 
 function Chip({
@@ -157,6 +158,11 @@ export function PlansScreen({ now = new Date() }: Props) {
           selected={mode === 'groceries'}
           onPress={() => setMode('groceries')}
         />
+        <Chip
+          label={t('plans.fasting.tab')}
+          selected={mode === 'fasting'}
+          onPress={() => setMode('fasting')}
+        />
       </View>
       {notice ? (
         <Card>
@@ -164,7 +170,9 @@ export function PlansScreen({ now = new Date() }: Props) {
         </Card>
       ) : null}
 
-      {mode === 'recipes' ? (
+      {mode === 'fasting' ? (
+        <FastingPanel now={now} />
+      ) : mode === 'recipes' ? (
         <>
           <View style={styles.row}>
             {(['vegetarian', 'vegan', 'pescatarian', 'gluten_free'] as const).map((tag) => (

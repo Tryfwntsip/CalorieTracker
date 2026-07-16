@@ -105,13 +105,13 @@ function ProgressContent({
   fromDay: string;
   toDay: string;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const hasAnyData =
     analysis.caloriePoints.length +
       analysis.weightPoints.length +
       analysis.waterPoints.length +
       analysis.stepsPoints.length >
-    0;
+      0 || analysis.moodPoints.length > 0;
   if (!hasAnyData) {
     return <EmptyState title={t('progress.emptyTitle')} body={t('progress.emptyBody')} />;
   }
@@ -164,6 +164,32 @@ function ProgressContent({
           </>
         }
       />
+
+      <ChartCard
+        title={t('progress.moodTitle')}
+        summary={t('progress.moodSummary', {
+          average: rounded(analysis.averageMood, 1),
+        })}
+        points={analysis.moodPoints}
+        fromDay={fromDay}
+        toDay={toDay}
+        labels={<DataLabel label={t('progress.recorded')} />}
+      />
+
+      {analysis.moodTags.length > 0 ? (
+        <Card style={styles.card}>
+          <AppText variant="headline">{t('progress.moodTagsTitle')}</AppText>
+          <AppText color="secondary">{t('progress.moodTagsSummary')}</AppText>
+          {analysis.moodTags.map((tag) => (
+            <StatBar
+              key={tag.tagId}
+              label={i18n.language === 'el' ? tag.nameEl : tag.name}
+              valueText={t('progress.moodTagCount', { count: tag.count })}
+              progress={tag.count / Math.max(...analysis.moodTags.map(({ count }) => count), 1)}
+            />
+          ))}
+        </Card>
+      ) : null}
 
       <ChartCard
         title={t('progress.weightTitle')}

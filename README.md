@@ -50,7 +50,11 @@ npm test
 - ✅ M4 — Offline food diary (Today/Diary, manual logs, totals, undo, copy, custom meals)
 - ✅ M5 — Local food catalog and search (150 bilingual foods, portions, favorites, templates)
 - ✅ M6 — Barcode scanning (offline-first lookup, OFF cache, history, manual fallback)
-- ⏭️ M7 — Progress and charts
+- ✅ M7 — Progress and charts
+- ✅ M8 — Recipes and grocery lists
+- ✅ M9 — Weekly meal planning
+- ✅ M10 — Intermittent fasting and mood trends
+- ⏭️ M11 — Optional HealthKit and Health Connect integrations
 
 ## Disclaimer
 

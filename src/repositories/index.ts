@@ -2,6 +2,7 @@ export * from '@/repositories/barcodeRepository';
 export * from '@/repositories/diaryRepository';
 export * from '@/repositories/errors';
 export * from '@/repositories/foodRepository';
+export * from '@/repositories/fastingRepository';
 export * from '@/repositories/healthRecordRepository';
 export * from '@/repositories/groceryRepository';
 export * from '@/repositories/mealSectionRepository';

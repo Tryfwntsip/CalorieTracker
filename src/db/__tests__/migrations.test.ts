@@ -32,6 +32,10 @@ const requiredTables = [
   'grocery_items',
   'meal_plans',
   'meal_plan_entries',
+  'fasting_plans',
+  'fasting_sessions',
+  'mood_tags',
+  'diary_day_mood_tags',
 ];
 
 const requiredIndexes = [
@@ -62,6 +66,11 @@ const requiredIndexes = [
   'idx_meal_plan_entries_recipe',
   'idx_meal_plan_entries_food',
   'idx_meal_plan_entries_template',
+  'idx_fasting_plans_one_active',
+  'idx_fasting_sessions_one_active',
+  'idx_fasting_sessions_started',
+  'idx_fasting_sessions_plan',
+  'idx_diary_day_mood_tags_tag',
 ];
 
 describe('SQLite initialization and migrations', () => {

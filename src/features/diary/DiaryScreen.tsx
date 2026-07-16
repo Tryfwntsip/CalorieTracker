@@ -8,7 +8,7 @@ import { BLOCKED_CALORIE_TARGET, CONFIRM_CALORIE_TARGET_MAX } from '@/domain/goa
 import { BarcodeSheet } from '@/features/barcode/BarcodeSheet';
 import { FoodSearchSheet } from '@/features/food/FoodSearchSheet';
 import { useProfile } from '@/features/profile/ProfileProvider';
-import type { DiaryEntry, ExerciseLog, MealSection, WaterRecord } from '@/types';
+import type { DiaryEntry, ExerciseLog, MealSection, MoodTag, WaterRecord } from '@/types';
 import {
   AppText,
   Button,
@@ -412,6 +412,8 @@ export function DiaryScreen({ mode }: Props) {
       <DailyDetailsSheet
         visible={sheet === 'daily'}
         day={state.day}
+        moodTags={state.moodTags}
+        selectedMoodTagIds={state.selectedMoodTagIds}
         water={state.water}
         steps={state.steps?.steps ?? null}
         weight={state.weight?.weightKg ?? null}
@@ -421,7 +423,7 @@ export function DiaryScreen({ mode }: Props) {
         onSave={async (values) => {
           if (values.weight !== null) await diary.saveWeight(values.weight);
           if (values.steps !== null) await diary.saveSteps(values.steps);
-          await diary.saveDay(values.mood, values.note);
+          await diary.saveDay(values.mood, values.note, values.moodTagIds);
           setSheet(null);
         }}
       />
@@ -654,6 +656,8 @@ function ExerciseSheet({
 function DailyDetailsSheet({
   visible,
   day,
+  moodTags,
+  selectedMoodTagIds,
   water,
   steps,
   weight,
@@ -664,6 +668,8 @@ function DailyDetailsSheet({
 }: {
   visible: boolean;
   day: { mood: number | null; note: string | null } | null;
+  moodTags: MoodTag[];
+  selectedMoodTagIds: string[];
   water: WaterRecord[];
   steps: number | null;
   weight: number | null;
@@ -675,19 +681,22 @@ function DailyDetailsSheet({
     note: string | null;
     steps: number | null;
     weight: number | null;
+    moodTagIds: string[];
   }) => Promise<void>;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [mood, setMood] = useState<number | null>(null);
   const [note, setNote] = useState('');
   const [stepValue, setStepValue] = useState('');
   const [weightValue, setWeightValue] = useState('');
+  const [moodTagIds, setMoodTagIds] = useState<string[]>([]);
   const reset = useCallback(() => {
     setMood(day?.mood ?? null);
     setNote(day?.note ?? '');
     setStepValue(steps === null ? '' : String(steps));
     setWeightValue(weight === null ? '' : String(weight));
-  }, [day, steps, weight]);
+    setMoodTagIds(selectedMoodTagIds);
+  }, [day, selectedMoodTagIds, steps, weight]);
   useEffectWhenVisible(visible, reset);
 
   return (
@@ -742,6 +751,25 @@ function DailyDetailsSheet({
           />
         ))}
       </View>
+      <AppText variant="label" color="secondary">
+        {t('diary.moodTags')}
+      </AppText>
+      <View style={styles.sectionPicker}>
+        {moodTags.map((tag) => (
+          <Choice
+            key={tag.id}
+            label={i18n.language === 'el' ? tag.nameEl : tag.name}
+            selected={moodTagIds.includes(tag.id)}
+            onPress={() =>
+              setMoodTagIds((current) =>
+                current.includes(tag.id)
+                  ? current.filter((id) => id !== tag.id)
+                  : [...current, tag.id],
+              )
+            }
+          />
+        ))}
+      </View>
       <Input label={t('diary.notes')} value={note} onChangeText={setNote} multiline />
       <Button
         label={t('common.save')}
@@ -752,6 +780,7 @@ function DailyDetailsSheet({
             note: note.trim() || null,
             steps: numberOrNull(stepValue),
             weight: numberOrNull(weightValue),
+            moodTagIds,
           })
         }
       />

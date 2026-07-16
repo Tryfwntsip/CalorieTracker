@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useDatabase } from '@/db/DatabaseProvider';
 import { calculateDiaryTotals, effectiveCalorieTarget } from '@/domain/diary';
+import { fastingAdjustedTarget } from '@/domain/fasting';
 import { BLOCKED_CALORIE_TARGET } from '@/domain/goals/guardrails';
 import { createId } from '@/lib/id';
 import {
   createActivityRepository,
   createDiaryRepository,
+  createFastingRepository,
   createHealthRecordRepository,
   createMealSectionRepository,
   createProfileRepository,
@@ -22,6 +24,8 @@ import type {
   StepsLog,
   WaterRecord,
   WeightRecord,
+  MoodTag,
+  FastingPlan,
 } from '@/types';
 
 type DiaryData = {
@@ -34,6 +38,9 @@ type DiaryData = {
   weight: WeightRecord | null;
   settings: Settings;
   historicalTarget: number;
+  moodTags: MoodTag[];
+  selectedMoodTagIds: string[];
+  activeFastingPlan: FastingPlan | null;
 };
 
 type State = { status: 'loading' } | { status: 'error' } | ({ status: 'ready' } & DiaryData);
@@ -69,21 +76,37 @@ export function useDiaryData(dayDate: string, baseTarget: number) {
   const meals = useMemo(() => createMealSectionRepository(database), [database]);
   const settingsRepository = useMemo(() => createSettingsRepository(database), [database]);
   const profileRepository = useMemo(() => createProfileRepository(database), [database]);
+  const fastingRepository = useMemo(() => createFastingRepository(database), [database]);
 
   const load = useCallback(async () => {
     try {
-      const [day, entries, exercises, sections, steps, water, weight, settings, goalHistory] =
-        await Promise.all([
-          diary.getDay(dayDate),
-          diary.listEntries(dayDate),
-          activity.listExercises(dayDate),
-          meals.list(),
-          activity.getSteps(dayDate),
-          health.listWater(dayDate),
-          health.getWeightForDay(dayDate),
-          settingsRepository.get(),
-          profileRepository.listGoalHistory(),
-        ]);
+      const [
+        day,
+        entries,
+        exercises,
+        sections,
+        steps,
+        water,
+        weight,
+        settings,
+        goalHistory,
+        moodTags,
+        selectedMoodTagIds,
+        activeFastingPlan,
+      ] = await Promise.all([
+        diary.getDay(dayDate),
+        diary.listEntries(dayDate),
+        activity.listExercises(dayDate),
+        meals.list(),
+        activity.getSteps(dayDate),
+        health.listWater(dayDate),
+        health.getWeightForDay(dayDate),
+        settingsRepository.get(),
+        profileRepository.listGoalHistory(),
+        fastingRepository.listMoodTags(),
+        fastingRepository.listDayMoodTagIds(dayDate),
+        fastingRepository.getActivePlan(),
+      ]);
       if (!settings) throw new Error('Settings were not found.');
       const dayEnd = `${dayDate}T23:59:59.999Z`;
       const effectiveGoals = goalHistory.filter((goal) => goal.effectiveAt <= dayEnd);
@@ -100,11 +123,24 @@ export function useDiaryData(dayDate: string, baseTarget: number) {
         weight,
         settings,
         historicalTarget,
+        moodTags,
+        selectedMoodTagIds,
+        activeFastingPlan,
       });
     } catch {
       setState({ status: 'error' });
     }
-  }, [activity, baseTarget, dayDate, diary, health, meals, profileRepository, settingsRepository]);
+  }, [
+    activity,
+    baseTarget,
+    dayDate,
+    diary,
+    fastingRepository,
+    health,
+    meals,
+    profileRepository,
+    settingsRepository,
+  ]);
 
   useEffect(() => {
     const timer = setTimeout(() => void load(), 0);
@@ -134,10 +170,14 @@ export function useDiaryData(dayDate: string, baseTarget: number) {
 
   const target = useMemo(() => {
     if (state.status !== 'ready') return baseTarget;
-    return effectiveCalorieTarget(
+    return fastingAdjustedTarget(
+      effectiveCalorieTarget(
+        dayDate,
+        state.historicalTarget,
+        state.settings.weekdayCalorieOverrides,
+      ),
+      state.activeFastingPlan,
       dayDate,
-      state.historicalTarget,
-      state.settings.weekdayCalorieOverrides,
     );
   }, [baseTarget, dayDate, state]);
 
@@ -277,8 +317,9 @@ export function useDiaryData(dayDate: string, baseTarget: number) {
       });
       await load();
     },
-    async saveDay(mood: number | null, note: string | null) {
+    async saveDay(mood: number | null, note: string | null, moodTagIds: readonly string[]) {
       await diary.saveDay({ date: dayDate, mood, note });
+      await fastingRepository.setDayMoodTags(dayDate, moodTagIds);
       await load();
     },
     async copyFrom(sourceDate: string, section: string | null) {

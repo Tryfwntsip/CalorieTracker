@@ -17,3 +17,10 @@ jest.mock('expo-camera', () => {
     useCameraPermissions: () => [permission, async () => permission, async () => permission],
   };
 });
+
+jest.mock('expo-notifications', () => ({
+  SchedulableTriggerInputTypes: { DATE: 'date' },
+  requestPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
+  scheduleNotificationAsync: jest.fn(async () => 'notification-id'),
+  cancelScheduledNotificationAsync: jest.fn(async () => undefined),
+}));

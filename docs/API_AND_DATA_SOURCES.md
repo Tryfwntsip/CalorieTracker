@@ -16,7 +16,9 @@ Status: revised 2026-07-16 — local-first. **No API keys, external accounts, or
 ## 2. Local Greek food & recipe DB
 
 - Originally authored entries (nutrients from public-domain composition sources) — never scraped from commercial apps; both `name` and `name_el` populated; `source='greek_seed'`, `quality='complete'`.
-- Dev seed examples arrived in M2; the production catalog of 150 bilingual foods ships in migration 004 (M5); ~25 original recipes arrive in M8.
+- Dev seed examples arrived in M2; the production catalog of 150 bilingual foods
+  ships in migration 004 (M5); 25 original bilingual recipes ship in migration
+  005 (M8).
 - This is the **primary** search source — the app must feel complete with the device offline.
 
 ## 3. Open Food Facts

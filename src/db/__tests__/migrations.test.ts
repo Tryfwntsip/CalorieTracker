@@ -25,6 +25,11 @@ const requiredTables = [
   'food_recents',
   'meal_templates',
   'meal_template_items',
+  'recipes',
+  'recipe_ingredients',
+  'recipe_favorites',
+  'grocery_lists',
+  'grocery_items',
 ];
 
 const requiredIndexes = [
@@ -47,6 +52,10 @@ const requiredIndexes = [
   'idx_foods_search_name_el',
   'idx_food_recents_used',
   'idx_template_items_template',
+  'idx_recipes_source_title',
+  'idx_recipe_ingredients_recipe',
+  'idx_recipe_ingredients_food',
+  'idx_grocery_items_list',
 ];
 
 describe('SQLite initialization and migrations', () => {
@@ -91,6 +100,19 @@ describe('SQLite initialization and migrations', () => {
 
     expect(tables.map(({ name }) => name)).toEqual(expect.arrayContaining(requiredTables));
     expect(indexes.map(({ name }) => name)).toEqual(expect.arrayContaining(requiredIndexes));
+  });
+
+  it('ships 25 original recipes with valid local-food ingredients', async () => {
+    await initializeDatabase(database);
+    const recipeCount = await database.getFirstAsync<{ count: number }>(
+      "SELECT COUNT(*) AS count FROM recipes WHERE source = 'seed'",
+    );
+    const orphanCount = await database.getFirstAsync<{ count: number }>(
+      `SELECT COUNT(*) AS count FROM recipe_ingredients
+       WHERE food_id IS NULL OR recipe_id NOT IN (SELECT id FROM recipes)`,
+    );
+    expect(recipeCount?.count).toBe(25);
+    expect(orphanCount?.count).toBe(0);
   });
 
   it('enables foreign keys and enforces cascade behavior', async () => {
@@ -299,7 +321,7 @@ describe('SQLite initialization and migrations', () => {
   it('rolls back a failing migration and preserves the prior version', async () => {
     await initializeDatabase(database, migrations);
     const failing: Migration = {
-      version: 5,
+      version: latestMigrationVersion + 1,
       name: 'deliberate_failure',
       up: async (transaction) => {
         await transaction.execAsync(`
@@ -311,7 +333,7 @@ describe('SQLite initialization and migrations', () => {
 
     await expect(initializeDatabase(database, [...migrations, failing])).rejects.toMatchObject({
       code: 'migration_failed',
-      migrationVersion: 5,
+      migrationVersion: latestMigrationVersion + 1,
     } satisfies Partial<DatabaseInitializationError>);
 
     await expect(getUserVersion(database)).resolves.toBe(latestMigrationVersion);

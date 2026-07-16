@@ -70,7 +70,7 @@ Expo SDK 57 + TS strict + Expo Router; tokens/themes; i18n en/el; UI kit; 5-tab 
 Weight (trend line), calories vs target, water, steps, macros; weekly/monthly averages; recorded/calculated/estimated labeling; textual summaries; 2-year performance via SQL aggregates on SQLite; chart library final pick.
 **Depends on:** M4 (M3 targets).
 
-## M8 — Recipes & grocery lists
+## M8 — Recipes & grocery lists ✅
 
 Recipe CRUD + seeded original recipes; per-serving nutrition from ingredients; dietary/allergy filters; favorites; log servings to diary; grocery lists with unit-aware combining. All local.
 **Depends on:** M5.

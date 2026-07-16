@@ -66,5 +66,9 @@ Status: Phase 1. Binding minimums; every milestone's acceptance criteria include
   logged-day-average tests; real-SQLite aggregate coverage verifies tombstone
   exclusion and daily water/steps semantics; the Progress screen has a
   provider-backed happy-path render test.
+- Recipes and groceries (M8): real-SQLite migration/seed and repository CRUD,
+  favorite/cascade behavior, table-driven per-serving nutrition with unknown
+  preservation, dietary/allergen filtering, unit-aware grocery combining, and a
+  seeded-recipe → diary + grocery-list UI journey.
 - Accessibility: automated a11y label lint + manual VoiceOver/TalkBack pass per milestone touching UI; dynamic-type 130% screenshot review.
 - Localization: pseudo-locale check for truncation; native review of Greek copy before release.

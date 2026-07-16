@@ -6,4 +6,5 @@ export * from '@/schemas/profile';
 export * from '@/schemas/profileForm';
 export * from '@/schemas/progress';
 export * from '@/schemas/records';
+export * from '@/schemas/recipes';
 export * from '@/schemas/settings';

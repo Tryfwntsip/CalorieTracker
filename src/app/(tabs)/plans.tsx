@@ -1,9 +1,5 @@
-import { Screen, ComingSoon } from '@/ui/components';
+import { PlansScreen } from '@/features/plans/PlansScreen';
 
 export default function PlansRoute() {
-  return (
-    <Screen>
-      <ComingSoon milestone={8} />
-    </Screen>
-  );
+  return <PlansScreen />;
 }

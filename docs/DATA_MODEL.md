@@ -78,7 +78,7 @@ serving_name TEXT NULL, serving_grams REAL NULL,
 energy_kcal REAL NULL, protein_g REAL NULL, carbs_g REAL NULL, fat_g REAL NULL,
 sat_fat_g REAL NULL, mono_fat_g REAL NULL, poly_fat_g REAL NULL,
 fiber_g REAL NULL, sugar_g REAL NULL, salt_g REAL NULL, sodium_mg REAL NULL,
-cholesterol_mg REAL NULL, micros_json TEXT NULL (JSON, canonical keys — §7),
+cholesterol_mg REAL NULL, micros_json TEXT NULL (JSON, canonical keys — §8),
 created_at TEXT, updated_at TEXT
 UNIQUE(source, external_id) WHERE external_id IS NOT NULL
 INDEX idx_foods_barcode ON foods(barcode)
@@ -230,32 +230,83 @@ meal_template_items(
 
 The production part of migration 004 inserts 150 original bilingual Greek/common foods and one provider-defined portion for each. It is idempotent by stable IDs/external IDs and is separate from the optional development demo diary seed.
 
-## 5. Later-milestone tables (introduced by their own migrations)
+## 5. M8 recipe and grocery tables
 
-- **M8:** `recipes`, `recipe_ingredients`, `recipe_favorites`, `grocery_lists`, `grocery_items`.
+Migration 005 adds:
+
+**recipes / recipe_ingredients / recipe_favorites**
+
+```
+recipes(
+  id TEXT PK, title TEXT, title_el TEXT NULL, servings REAL,
+  prep_minutes INTEGER, cook_minutes INTEGER,
+  instructions_json TEXT, instructions_el_json TEXT NULL,
+  dietary_tags_json TEXT, allergen_tags_json TEXT,
+  source TEXT CHECK(source IN ('user','seed')),
+  created_at TEXT, updated_at TEXT
+)
+recipe_ingredients(
+  id TEXT PK, recipe_id TEXT REFERENCES recipes(id) ON DELETE CASCADE,
+  food_id TEXT NULL REFERENCES foods(id) ON DELETE SET NULL,
+  label TEXT, quantity REAL, unit TEXT CHECK(unit IN ('g','ml','piece')),
+  grams_resolved REAL NULL, position INTEGER, created_at TEXT,
+  UNIQUE(recipe_id, position)
+)
+recipe_favorites(
+  recipe_id TEXT PK REFERENCES recipes(id) ON DELETE CASCADE,
+  created_at TEXT
+)
+```
+
+Ingredient labels survive deletion of a referenced user food. Per-serving
+nutrition is calculated from the current validated food nutrients and
+`grams_resolved`; if required nutrient data or a conversion is missing, the
+result remains unknown rather than silently becoming zero. Migration 005 ships
+25 original bilingual recipes linked to the production food catalog.
+
+**grocery_lists / grocery_items**
+
+```
+grocery_lists(id TEXT PK, name TEXT, created_at TEXT, updated_at TEXT)
+grocery_items(
+  id TEXT PK, list_id TEXT REFERENCES grocery_lists(id) ON DELETE CASCADE,
+  food_id TEXT NULL REFERENCES foods(id) ON DELETE SET NULL,
+  label TEXT, quantity REAL, unit TEXT CHECK(unit IN ('g','ml','piece')),
+  grams_resolved REAL NULL, is_checked INTEGER, position INTEGER,
+  created_at TEXT, updated_at TEXT
+)
+```
+
+Recipe ingredients with the same food and unit are summed. Different units are
+combined into grams only when both have a resolved gram amount. Manual items
+merge by an accent-insensitive normalized label; otherwise they remain separate.
+Checked state is preserved only when every merged source row was checked.
+
+## 6. Later-milestone tables (introduced by their own migrations)
+
 - **M9:** `meal_plans`, `meal_plan_entries` (XOR check: recipe/food/template).
 - **M10:** `fasting_plans`, `fasting_sessions`.
 - **M12 (optional):** `photo_analyses` (result JSON, confidence, confirmed entry ids; image kept only with opt-in).
 
 Column shapes follow the same conventions; each lands with its milestone and its own migration + tests.
 
-## 6. Migration discipline
+## 7. Migration discipline
 
 - `src/db/migrations/index.ts` exports the ordered list; the runner (`src/db/migrate.ts`) wraps each pending migration in a transaction, applies in order, sets `PRAGMA user_version = n`.
 - A failing migration rolls back, leaves the previous `user_version`, and surfaces a typed error (tested).
 - Destructive column changes use the SQLite table-rebuild recipe (new table → copy → drop → rename) inside one transaction.
 - Tests cover: fresh install → latest; every stepwise upgrade path from each released version; idempotent re-run.
 
-## 7. Canonical nutrient model
+## 8. Canonical nutrient model
 
 Unchanged in spirit from the original design: fixed macro columns + `micros_json` restricted to canonical keys (`vit_a_ug, vit_c_mg, vit_d_ug, vit_e_mg, vit_k_ug, thiamin_mg, riboflavin_mg, niacin_mg, vit_b6_mg, folate_ug, vit_b12_ug, calcium_mg, iron_mg, magnesium_mg, potassium_mg, zinc_mg, phosphorus_mg, selenium_ug, iodine_ug`), Zod-enforced (`src/domain/schemas/nutrients.ts`). Missing = `NULL`/absent, never 0. Provider mappings (OFF → canonical) live with the OFF adapter and are fixture-tested.
 
-## 8. Seed data
+## 9. Seed data
 
 - **Dev-only** (`src/db/seed/dev.ts`): a small set of original Greek example foods with portions + one demo diary day; runs only in `__DEV__`, only when all relevant tables are empty, and is idempotent.
-- **Production catalog** (M5+): curated Greek foods/recipes shipped as versioned seed migrations (originally authored; no scraped/proprietary data).
+- **Production catalog** (M5+): curated Greek foods and 25 bilingual M8 recipes shipped as versioned seed migrations (originally authored; no scraped/proprietary data).
 
-## 9. Aggregation for analytics (M7)
+## 10. Aggregation for analytics (M7)
 
 Daily SQL aggregates over `diary_entries`, `water_records`, and `steps_logs`, plus the
 already-daily `weight_records`, power charts. Queries stay in
@@ -266,7 +317,7 @@ nutrition query, then weekday overrides are applied by the pure progress domain
 calculation. The UI requests only the selected bounded range (maximum 730 days),
 so raw diary/water/steps event rows are never fanned out to JavaScript.
 
-## 10. Implementation decisions
+## 11. Implementation decisions
 
 - SQLite cannot express strict ISO-8601 or real-calendar validation cleanly with portable `CHECK` syntax, so date/timestamp shape is enforced by Zod on every repository read; enum, range, uniqueness, and relationship rules remain database constraints.
 - `food_portions` are deleted with their food (`CASCADE`). Historical diary entries and cached scan records keep their event rows when a food is removed, but their food reference becomes `NULL` (`SET NULL`). Deleting a diary day deletes its entries (`CASCADE`).

@@ -75,7 +75,7 @@ Portions: g, ml, serving, piece, teaspoon (5 ml), tablespoon (15 ml), plus provi
 
 Nutrient panel (when data exists): energy, protein, carbs, fat, saturated fat, monounsaturated fat, polyunsaturated fat, fiber, sugar, salt & sodium, cholesterol, vitamins (A, C, D, E, K, B1, B2, B3, B6, B9, B12), minerals (calcium, iron, magnesium, potassium, zinc, phosphorus, selenium, iodine). Missing values display as "—", never as 0.
 
-Canonical nutrient model: all providers map into one normalized structure per 100 g/ml (see DATA_MODEL §7). Every food records source, external ID, last sync date, and a data-quality level (verified / complete / partial / user-entered). Conflicting sources are **never merged silently**: the app shows which source is used and lets the user pick another match or correct values (corrections stored as user overrides, original preserved).
+Canonical nutrient model: all providers map into one normalized structure per 100 g/ml (see DATA_MODEL §8). Every food records source, external ID, last sync date, and a data-quality level (verified / complete / partial / user-entered). Conflicting sources are **never merged silently**: the app shows which source is used and lets the user pick another match or correct values (corrections stored as user overrides, original preserved).
 
 Offline: the entire local catalog (Greek DB, custom foods, anything previously looked up) is loggable offline — always.
 

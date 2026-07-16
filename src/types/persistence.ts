@@ -16,6 +16,10 @@ import {
   profileGoalHistorySchema,
   profileSchema,
   scannedProductSchema,
+  recipeSchema,
+  recipeIngredientSchema,
+  groceryListSchema,
+  groceryItemSchema,
   settingsSchema,
   stepsLogSchema,
   weightRecordSchema,
@@ -41,6 +45,10 @@ export type WeightRecord = z.output<typeof weightRecordSchema>;
 export type WaterRecord = z.output<typeof waterRecordSchema>;
 export type ScannedProduct = z.output<typeof scannedProductSchema>;
 export type BarcodeScanHistory = z.output<typeof barcodeScanHistorySchema>;
+export type Recipe = z.output<typeof recipeSchema>;
+export type RecipeIngredient = z.output<typeof recipeIngredientSchema>;
+export type GroceryList = z.output<typeof groceryListSchema>;
+export type GroceryItem = z.output<typeof groceryItemSchema>;
 
 export type ProfileWrite = Omit<Profile, 'id' | 'createdAt' | 'updatedAt'>;
 export type SettingsWrite = Omit<Settings, 'id' | 'createdAt' | 'updatedAt'>;
@@ -61,3 +69,10 @@ export type WeightRecordWrite = Omit<WeightRecord, 'createdAt' | 'updatedAt'>;
 export type WaterRecordWrite = Omit<WaterRecord, 'createdAt'>;
 export type ScannedProductWrite = Omit<ScannedProduct, 'createdAt' | 'updatedAt'>;
 export type BarcodeScanHistoryWrite = BarcodeScanHistory;
+export type RecipeWrite = Omit<Recipe, 'isFavorite' | 'createdAt' | 'updatedAt'>;
+export type RecipeIngredientWrite = Omit<
+  RecipeIngredient,
+  'labelEl' | 'energyKcal' | 'proteinG' | 'carbsG' | 'fatG' | 'createdAt'
+>;
+export type GroceryListWrite = Omit<GroceryList, 'createdAt' | 'updatedAt'>;
+export type GroceryItemWrite = Omit<GroceryItem, 'createdAt' | 'updatedAt'>;

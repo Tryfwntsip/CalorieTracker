@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import { addDays, dayKeyOf, formatDayKey, isDayKey } from '@/domain/dates';
 import { BLOCKED_CALORIE_TARGET, CONFIRM_CALORIE_TARGET_MAX } from '@/domain/goals/guardrails';
+import { BarcodeSheet } from '@/features/barcode/BarcodeSheet';
 import { FoodSearchSheet } from '@/features/food/FoodSearchSheet';
 import { useProfile } from '@/features/profile/ProfileProvider';
 import type { DiaryEntry, ExerciseLog, MealSection, WaterRecord } from '@/types';
@@ -24,7 +25,15 @@ import { MIN_TOUCH_TARGET, radii, spacing } from '@/ui/tokens';
 import { type ExerciseValues, type QuickEntryValues, useDiaryData } from './useDiaryData';
 
 type SheetName =
-  'foodSearch' | 'entry' | 'exercise' | 'daily' | 'sections' | 'copy' | 'override' | null;
+  | 'foodSearch'
+  | 'barcode'
+  | 'entry'
+  | 'exercise'
+  | 'daily'
+  | 'sections'
+  | 'copy'
+  | 'override'
+  | null;
 
 type Props = {
   mode: 'today' | 'diary';
@@ -176,6 +185,14 @@ export function DiaryScreen({ mode }: Props) {
         <Button
           label={t('diary.addFood')}
           onPress={() => openFoodSearch(visibleSections[0]?.id ?? 'breakfast')}
+        />
+        <Button
+          label={t('diary.scanBarcode')}
+          variant="secondary"
+          onPress={() => {
+            setEntrySection(visibleSections[0]?.id ?? 'breakfast');
+            setSheet('barcode');
+          }}
         />
         <Button
           label={t('diary.manualQuickEntry')}
@@ -374,6 +391,15 @@ export function DiaryScreen({ mode }: Props) {
         onClose={() => setSheet(null)}
         onLogged={diary.retry}
       />
+      {sheet === 'barcode' ? (
+        <BarcodeSheet
+          visible
+          dayDate={dayDate}
+          section={entrySection}
+          onClose={() => setSheet(null)}
+          onLogged={diary.retry}
+        />
+      ) : null}
       <ExerciseSheet
         visible={sheet === 'exercise'}
         exercise={editingExercise}

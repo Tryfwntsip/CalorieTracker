@@ -85,6 +85,7 @@ src/app routes → src/features → src/services + src/repositories → src/doma
 - Diary entry deletion first writes a six-second tombstone (`deleted_at`); undo clears it. Other append-only manual records are recreated from their validated in-memory snapshot during the same undo window.
 - M5 local food search uses migration-maintained, accent-stripped lowercase keys for both English and Greek names. SQLite remains the only catalog queried during normal typing; the optional OFF request runs only after an explicit user action and successful results are cache-through.
 - Curated/OFF corrections are overlay rows in `food_overrides`, preserving the source row. Custom foods remain directly editable user-owned rows. Diary entries always snapshot the effective overlaid nutrients at log time.
+- M6 barcode input is checksum-validated and normalized to GTIN-13 in pure domain code. Lookup orchestration always checks `foods.barcode` and `scanned_products` before the optional eight-second OFF request, then records one history row for every resolved, missing, or unavailable lookup.
 
 ### Integration-test runtime
 
@@ -141,3 +142,5 @@ Dev: Expo dev tools + `src/lib/logger` (leveled, redacting). **No third-party cr
 | D11 | Repository-backed feature hooks instead of a server-state cache for the local-only diary | Accepted (M4; avoids an unnecessary dependency)           |
 | D12 | Normalized search-key columns instead of locale-dependent SQLite collation               | Accepted (M5; deterministic accent-insensitive en/el)     |
 | D13 | OFF plain-text search uses its explicit legacy endpoint, never search-as-you-type        | Accepted (M5; current OFF v2/v3 omit full-text search)    |
+| D14 | Barcode variants normalize to checksum-validated GTIN-13 before lookup or persistence    | Accepted (M6; one stable local/cache key)                 |
+| D15 | Camera permission is user-triggered; manual barcode entry remains permanently available  | Accepted (M6; minimal permission and graceful fallback)   |

@@ -21,7 +21,7 @@ Status: revised 2026-07-16 — local-first. **No API keys, external accounts, or
 
 ## 3. Open Food Facts
 
-- Product by barcode: `GET https://world.openfoodfacts.org/api/v3/product/{barcode}` (M6). Current OFF v2/v3 search is structured only, so M5's optional plain-text search uses the documented legacy `/cgi/search.pl` endpoint. It is user-triggered, limited to 20 fields/results, never search-as-you-type, and sends a custom `CalorieTracker/1.0` User-Agent. No key or account is needed.
+- Product by barcode: `GET https://world.openfoodfacts.org/api/v3/product/{barcode}` (M6). Current OFF v2/v3 search is structured only, so M5's optional plain-text search uses the documented legacy `/cgi/search.pl` endpoint. Requests select only the required fields and send `CalorieTracker/1.0 (https://github.com/Tryfwntsip/CalorieTracker)` as the identifying User-Agent. No key or account is needed.
 - OFF currently limits search requests to 10/min/IP. The UI therefore keeps local SQLite search primary and makes each network search an explicit button press.
 - Cache-through: every successful lookup is normalized into `foods` (+ `scanned_products` for barcodes) so repeats work offline forever.
 - Quality: crowdsourced → `quality='partial'` unless completeness checks pass (energy + macros present); keep `nova_class` for the food score.
@@ -42,7 +42,7 @@ Status: revised 2026-07-16 — local-first. **No API keys, external accounts, or
 
 ## 6. Barcode scanning (M6)
 
-`expo-camera` (EAN-13/EAN-8/UPC-A/UPC-E) wrapped in a `BarcodeScanner` adapter; requires a dev build (not Expo Go). Variants normalized to GTIN-13 in one tested function. Lookup order: local `foods.barcode` → `scanned_products` cache → OFF (online only) → not-found flow (create custom food).
+`expo-camera` (EAN-13/EAN-8/UPC-A/UPC-E) wrapped in a `BarcodeScanner` adapter; requires a dev build. Variants are checksum-validated and normalized to GTIN-13 in one tested pure function. Lookup order: local `foods.barcode` → `scanned_products` cache → OFF v3 (online only, eight-second timeout) → not-found flow (create custom food). Every attempt writes `barcode_scan_history`; successful OFF results cache into both `foods` and `scanned_products`.
 
 ## 7. Accounts/credentials checklist
 
@@ -50,5 +50,5 @@ Status: revised 2026-07-16 — local-first. **No API keys, external accounts, or
 | ----------------------------- | ---------------------------------- | -------------------------------------------------------- |
 | — nothing —                   | M2–M10, M13, M14                   | zero accounts, zero keys                                 |
 | Free Apple ID (personal team) | M6/M11 dev builds on a real iPhone | already have; 7-day re-sign                              |
-| OFF User-Agent contact email  | M6                                 | just a string in the request header, no signup           |
+| OFF identifying User-Agent    | M5/M6                              | app/version + repository URL; no signup                  |
 | OpenAI **or** Gemini key      | M12 only, optional                 | user-supplied, runtime-entered; milestone can be skipped |

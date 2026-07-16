@@ -37,6 +37,7 @@ Status: Phase 1. Binding minimums; every milestone's acceptance criteria include
 - **Profile persistence:** M2→M3 migration snapshots existing goals; create/update appends versions transactionally; service tests prove UI confirmation cannot bypass blocked targets.
 - **Diary:** consumed/burned/remaining and macro totals ignore tombstones; weekday overrides resolve by local day key; M3→M4 migration preserves entries; copy, soft-delete/restore, meal-section changes, exercise, and steps use real SQLite integration tests.
 - **Food catalog:** English/Greek accent normalization; per-portion snapshot scaling; 150-row production seed; favorites/recents/overrides/templates on real SQLite; offline Greek search-to-log UI flow; OFF mapper fixtures including kJ-only energy, sodium conversion, missing→null, and invalid responses.
+- **Barcode:** GTIN check digits plus EAN-8/EAN-13/UPC-A/UPC-E normalization; local-first and cache-through orchestration against real SQLite; found/not-found/offline history; OFF v3 fixture mapping; offline manual-barcode-to-diary UI flow.
 - **Food score:** reference table of ~20 foods (e.g. lentils, olive oil, feta, soft drink, whole bread) with hand-computed expected scores and top factors; monotonicity tests (more fiber never lowers score, ceteris paribus); "not enough data" cases.
 - **Nutrient normalization:** per-provider mapper fixtures incl. kJ-only products, sodium↔salt, missing→null (never 0), per-serving→per-100g conversion.
 - **Units/portions:** g/ml/serving/piece/tsp/tbsp round-trips; liquid vs solid.

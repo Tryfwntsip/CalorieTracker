@@ -1,9 +1,19 @@
-import type { FoodWrite } from '@/types';
+import type { FoodWrite, ScannedProductWrite } from '@/types';
 
 export type FoodSearchLocale = 'en' | 'el';
 
+export type ExternalBarcodeProduct = {
+  food: FoodWrite;
+  rawPayload: ScannedProductWrite['rawPayload'];
+};
+
 export interface FoodDataProvider {
   searchText(query: string, locale: FoodSearchLocale, signal?: AbortSignal): Promise<FoodWrite[]>;
+  getByBarcode(
+    barcode: string,
+    locale: FoodSearchLocale,
+    signal?: AbortSignal,
+  ): Promise<ExternalBarcodeProduct | null>;
 }
 
 export type FoodDataErrorCode = 'offline' | 'rate_limited' | 'server' | 'invalid_response';

@@ -29,6 +29,8 @@ Threats: device theft/loss (mitigated by OS-level encryption + optional future S
 
 Never sent anywhere: diary contents, weight, mood, profile, identifiers. There are no analytics/crash SDKs.
 
+Camera permission is requested only when the user chooses barcode scanning. The scanner reads EAN/UPC data only; it does not capture or retain photos or video, and manual barcode entry remains available when permission is denied.
+
 ## 5. External data hygiene
 
 - All OFF/vision responses are Zod-validated; text fields length-capped and control-character-stripped before touching SQLite (poisoned-catalog defense).

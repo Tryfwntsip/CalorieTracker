@@ -1,3 +1,4 @@
+export * from '@/schemas/barcode';
 export * from '@/schemas/diary';
 export * from '@/schemas/food';
 export * from '@/schemas/foodTracking';

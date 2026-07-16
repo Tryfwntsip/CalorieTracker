@@ -23,6 +23,7 @@ FROM barcode_scan_history
 export interface BarcodeRepository {
   getProduct(barcode: string): Promise<ScannedProduct | null>;
   createProduct(product: ScannedProductWrite): Promise<ScannedProduct>;
+  upsertProduct(product: ScannedProductWrite): Promise<ScannedProduct>;
   updateProduct(product: ScannedProductWrite): Promise<ScannedProduct>;
   deleteProduct(barcode: string): Promise<void>;
   getHistory(id: string): Promise<BarcodeScanHistory | null>;
@@ -83,6 +84,34 @@ export function createBarcodeRepository(
         throw mapRepositoryError(error, 'scanned_product');
       }
     },
+    async upsertProduct(product) {
+      try {
+        const now = clock.now();
+        await database.runAsync(
+          `INSERT INTO scanned_products (
+            barcode, food_id, source, raw_payload_json, fetched_at, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(barcode) DO UPDATE SET
+            food_id = excluded.food_id,
+            source = excluded.source,
+            raw_payload_json = excluded.raw_payload_json,
+            fetched_at = excluded.fetched_at,
+            updated_at = excluded.updated_at`,
+          product.barcode,
+          product.foodId,
+          product.source,
+          encodeJson(product.rawPayload),
+          product.fetchedAt,
+          now,
+          now,
+        );
+        const saved = await getProduct(product.barcode);
+        if (!saved) throw new Error('Upserted scanned product was not found.');
+        return saved;
+      } catch (error: unknown) {
+        throw mapRepositoryError(error, 'scanned_product');
+      }
+    },
     async updateProduct(product) {
       try {
         const result = await database.runAsync(
@@ -118,7 +147,7 @@ export function createBarcodeRepository(
     async listHistory() {
       try {
         const rows = await database.getAllAsync<unknown>(
-          `${selectHistory} ORDER BY scanned_at DESC, id`,
+          `${selectHistory} ORDER BY scanned_at DESC, id DESC`,
         );
         return rows.map((row) =>
           parseRecord(barcodeScanHistorySchema, row, 'barcode_scan_history'),

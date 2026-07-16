@@ -44,6 +44,7 @@ export interface FoodRepository {
   get(id: string): Promise<Food | null>;
   list(): Promise<Food[]>;
   search(query: string, limit?: number): Promise<Food[]>;
+  getByBarcode(barcode: string): Promise<Food | null>;
   getByExternal(source: Food['source'], externalId: string): Promise<Food | null>;
   create(food: FoodWrite): Promise<Food>;
   upsertExternal(food: FoodWrite): Promise<Food>;
@@ -198,6 +199,20 @@ export function createFoodRepository(
           limit,
         );
         return rows.map((row) => parseRecord(foodSchema, row, 'food'));
+      } catch (error: unknown) {
+        throw mapRepositoryError(error, 'food');
+      }
+    },
+    async getByBarcode(barcode) {
+      try {
+        const row = await database.getFirstAsync<unknown>(
+          `${selectFood} WHERE f.barcode = ? ORDER BY
+            CASE f.source WHEN 'user' THEN 0 WHEN 'greek_seed' THEN 1 ELSE 2 END,
+            f.updated_at DESC, f.id
+           LIMIT 1`,
+          barcode,
+        );
+        return row === null ? null : parseRecord(foodSchema, row, 'food');
       } catch (error: unknown) {
         throw mapRepositoryError(error, 'food');
       }

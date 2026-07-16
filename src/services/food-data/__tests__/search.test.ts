@@ -39,6 +39,7 @@ describe('external food cache-through', () => {
           micros: null,
         },
       ],
+      getByBarcode: async () => null,
     };
 
     await expect(

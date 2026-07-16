@@ -76,6 +76,45 @@ describe('Open Food Facts adapter', () => {
     } satisfies Partial<FoodDataError>);
   });
 
+  it('looks up a barcode through API v3 and maps the product', async () => {
+    const fetcher = jest.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ status: 'success', product }),
+    })) as unknown as typeof fetch;
+    const provider = createOpenFoodFactsProvider({
+      fetch: fetcher,
+      now: () => '2026-07-16T08:00:00.000Z',
+      id: () => 'barcode-food',
+    });
+
+    await expect(provider.getByBarcode('5201234567890', 'el')).resolves.toMatchObject({
+      food: {
+        id: 'barcode-food',
+        barcode: '5201234567890',
+        nameEl: 'Δημητριακά δοκιμής',
+      },
+    });
+    expect(fetcher).toHaveBeenCalledWith(
+      expect.stringContaining('/api/v3/product/5201234567890?'),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'User-Agent': expect.stringContaining('github.com/Tryfwntsip/CalorieTracker'),
+        }),
+      }),
+    );
+  });
+
+  it('returns no product for a valid OFF 404 response', async () => {
+    const fetcher = jest.fn(async () => ({
+      ok: false,
+      status: 404,
+    })) as unknown as typeof fetch;
+    const provider = createOpenFoodFactsProvider({ fetch: fetcher });
+
+    await expect(provider.getByBarcode('5201234567890', 'en')).resolves.toBeNull();
+  });
+
   it('rejects malformed provider payloads at the boundary', async () => {
     const fetcher = jest.fn(async () => ({
       ok: true,

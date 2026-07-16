@@ -56,9 +56,12 @@ Expo SDK 57 + TS strict + Expo Router; tokens/themes; i18n en/el; UI kit; 5-tab 
 **Acceptance:** find & log γίγαντες (local) offline; optional OFF search works online and caches; corrections stored as user overrides; templates loggable offline.
 **Depends on:** M4.
 
-## M6 — Barcode scanning
+## M6 — Barcode scanning ✅
 
 **Scope:** camera barcode scan (dev build required) → local lookup first (`foods.barcode`, `scanned_products`) → if unknown and online, OFF barcode lookup → normalized, cached into `foods` + `scanned_products`; `barcode_scan_history` records every scan (found/not_found/offline); not-found flow creates a custom food with the barcode attached; manual barcode entry fallback.
+**DB changes:** no new migration; M6 activates the `scanned_products` and `barcode_scan_history` tables and indexes that shipped in the M2 core schema.
+**Implementation:** `expo-camera` is isolated behind the barcode-scanner adapter; EAN-8/EAN-13/UPC-A/UPC-E values normalize and checksum-validate into GTIN-13; lookups time out before 10 seconds; camera permission is requested only after an explicit action.
+**Tests:** table-driven GTIN normalization/check digits; real-SQLite local/online/cache/not-found/offline orchestration; OFF v3 barcode fixtures; offline manual-barcode-to-diary and scan-history component flow.
 **Acceptance:** known barcode resolves **offline**; unknown barcode resolves online in <10 s and is cached; history screen lists scans; airplane-mode scan of unknown barcode explains gracefully.
 **Depends on:** M5.
 

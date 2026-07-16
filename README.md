@@ -27,7 +27,9 @@ Expo SDK 57 · React Native 0.86 · TypeScript (strict) · Expo Router · expo-s
 ```sh
 cd ~/Desktop/CalorieTracker
 npm install
-npm start        # scan the QR with Expo Go, or press i / a / w
+npm start        # non-camera development
+npx expo run:ios # native development build for barcode scanning
+npx expo run:android
 ```
 
 No configuration files, environment variables, accounts, or API keys are needed.
@@ -47,7 +49,8 @@ npm test
 - ✅ M3 — Personal profile and guarded calorie/macro targets
 - ✅ M4 — Offline food diary (Today/Diary, manual logs, totals, undo, copy, custom meals)
 - ✅ M5 — Local food catalog and search (150 bilingual foods, portions, favorites, templates)
-- ⏭️ M6 — Barcode scanning
+- ✅ M6 — Barcode scanning (offline-first lookup, OFF cache, history, manual fallback)
+- ⏭️ M7 — Progress and charts
 
 ## Disclaimer
 

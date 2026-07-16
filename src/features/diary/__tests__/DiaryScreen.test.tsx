@@ -2,7 +2,7 @@ import { act, fireEvent, screen } from '@testing-library/react-native';
 
 import { initializeDatabase } from '@/db/initialize';
 import { DiaryScreen } from '@/features/diary/DiaryScreen';
-import { createSettingsRepository, defaultSettings } from '@/repositories';
+import { createFoodRepository, createSettingsRepository, defaultSettings } from '@/repositories';
 import { renderWithProviders } from '@/test/render';
 import { createTestDatabase, type TestDatabase } from '@/test/sqlite';
 import type { Profile } from '@/types';
@@ -101,5 +101,54 @@ describe('DiaryScreen', () => {
 
     await fireEvent.press(await screen.findByText('Homemade snack'));
     expect(await screen.findByRole('button', { name: 'Log 160 kcal' })).toBeTruthy();
+  });
+
+  it('resolves a known barcode offline, logs it, and records scan history', async () => {
+    await createFoodRepository(database).create({
+      id: 'offline-barcode-food',
+      name: 'Offline cereal bar',
+      nameEl: 'Μπάρα δημητριακών offline',
+      brand: 'Example',
+      barcode: '3017620422003',
+      source: 'user',
+      externalId: null,
+      sourceUpdatedAt: null,
+      quality: 'user_entered',
+      novaClass: null,
+      isLiquid: false,
+      servingName: 'bar',
+      servingGrams: 30,
+      energyKcal: 400,
+      proteinG: 8,
+      carbsG: 70,
+      fatG: 10,
+      satFatG: null,
+      monoFatG: null,
+      polyFatG: null,
+      fiberG: null,
+      sugarG: null,
+      saltG: null,
+      sodiumMg: null,
+      cholesterolMg: null,
+      micros: null,
+    });
+    await renderWithProviders(<DiaryScreen mode="today" />, { database, profile });
+    await screen.findByText('Daily details');
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Scan barcode' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Enter barcode' }));
+    await fireEvent.changeText(screen.getByLabelText('Barcode number'), '3017620422003');
+    await act(async () => {
+      await fireEvent.press(screen.getByRole('button', { name: 'Look up barcode' }));
+    });
+    expect(await screen.findByText('Found on this device')).toBeTruthy();
+    await act(async () => {
+      await fireEvent.press(screen.getByRole('button', { name: 'Log 120 kcal' }));
+    });
+    expect(await screen.findByText('Offline cereal bar')).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Scan barcode' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Scan history' }));
+    expect(await screen.findByText('3017620422003')).toBeTruthy();
   });
 });

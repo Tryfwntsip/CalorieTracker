@@ -143,6 +143,8 @@ source TEXT NOT NULL CHECK(source IN ('off')), raw_payload_json TEXT NULL,
 fetched_at TEXT NOT NULL, created_at TEXT, updated_at TEXT
 ```
 
+M6 stores the canonical checksum-validated GTIN-13 as `barcode`. A successful OFF lookup writes the normalized food and a sanitized provider payload; local lookup never needs the payload. The existing M2 schema is sufficient, so M6 adds no migration.
+
 **barcode_scan_history**
 
 ```
@@ -152,6 +154,8 @@ resolved_food_id TEXT NULL REFERENCES foods(id) ON DELETE SET NULL,
 scanned_at TEXT NOT NULL
 INDEX idx_scan_history_time ON barcode_scan_history(scanned_at)
 ```
+
+M6 writes one row for every lookup attempt. Provider/network failures use `offline`; the user-facing result can retain a more specific typed provider error while the stable persisted status remains within this four-value set.
 
 Note: `weight_records`/`water_records` reference `day_date` **without** an FK to diary_days (a weigh-in shouldn't require creating a diary day); diary_entries do require the day row (repository creates it on first write).
 

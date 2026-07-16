@@ -1,0 +1,399 @@
+/plan
+
+Act as a senior product architect, mobile engineer, backend engineer, UX designer, security engineer, and QA engineer.
+
+## GOAL
+
+Design a production-quality, cross-platform nutrition and lifestyle tracking application for iOS and Android.
+
+The application should provide a complete premium experience comparable in breadth to leading nutrition tracking applications, but it must be an entirely original product.
+
+Do not copy YAZIO's source code, branding, name, logo, proprietary text, screenshots, visual identity, recipes, database, scoring algorithm, or exact screen layouts.
+
+Create an original application with an original design system, original navigation, original terminology, and independently implemented functionality.
+
+All features will initially be unlocked. Do not implement advertisements or a subscription paywall during the first development stages.
+
+The application must support:
+
+* Greek and English
+* Metric units
+* Dark and light themes
+* iOS and Android
+* Accessible typography and controls
+* Offline-friendly food diary operation
+
+## REQUIRED TECHNOLOGY
+
+Use:
+
+* React Native
+* Expo
+* TypeScript with strict mode
+* Expo Router
+* Supabase for PostgreSQL, authentication, storage, and server-side functions
+* Row Level Security for all private user data
+* Zod for runtime validation
+* A clean repository/service architecture
+* Secure environment variables
+* Automated unit, integration, and UI tests
+
+Do not expose private API keys in the mobile application.
+
+Use an abstraction layer for every external API so that providers can be replaced later.
+
+## CORE FUNCTIONALITY
+
+### 1. User onboarding and profile
+
+Create onboarding for:
+
+* Age
+* Biological sex, with an option not to specify
+* Height
+* Current weight
+* Goal weight
+* Activity level
+* Dietary preference
+* Allergies
+* Weight-loss, weight-maintenance, weight-gain, or muscle-building goal
+* Preferred measurement units
+* Desired weekly rate of weight change
+
+Calculate an initial daily calorie and macronutrient target.
+
+Clearly explain that all estimates are informational and are not medical advice.
+
+Do not permit obviously dangerous calorie goals. Require confirmation when the selected goal appears unusually aggressive.
+
+### 2. Nutrition diary
+
+Create a daily diary containing:
+
+* Breakfast
+* Morning snack
+* Lunch
+* Afternoon snack
+* Dinner
+* Additional meals
+* Water
+* Exercise
+* Steps
+* Weight
+* Mood
+* Daily notes
+
+Allow users to:
+
+* Rename meal categories
+* Reorder diary sections
+* Copy a meal from another date
+* Save foods as favorites
+* Create frequently used meals
+* Log meals for future dates
+* Undo and edit entries
+* Use different calorie targets on selected weekdays
+* See consumed, burned, remaining, and target calories
+
+### 3. Food tracking
+
+Support:
+
+* Food text search
+* Recent foods
+* Favorite foods
+* Custom foods
+* Custom meals
+* Barcode scanning
+* Manual calorie entry
+* Portion selection in grams, milliliters, servings, pieces, teaspoons, and tablespoons
+* Nutrition values per 100 g and per selected portion
+* Offline caching of recently used foods
+
+Nutrition information should include:
+
+* Calories
+* Protein
+* Carbohydrates
+* Fat
+* Saturated fat
+* Monounsaturated fat
+* Polyunsaturated fat
+* Fiber
+* Sugar
+* Salt and sodium
+* Cholesterol
+* Vitamins
+* Minerals
+
+Create a normalized nutrient model so different food databases can be mapped into a common format.
+
+### 4. External food data
+
+Design adapters for:
+
+* Open Food Facts for packaged foods and barcode lookup
+* USDA FoodData Central for generic food and detailed nutrient information
+* A local database containing Greek foods and recipes
+
+Store the original source, external ID, last update date, and data quality level for every food.
+
+Never silently combine conflicting nutrient information. Display the selected source and allow corrections.
+
+### 5. AI meal photo analysis
+
+Design an AI-assisted meal logging system where the user can photograph a meal.
+
+The system should:
+
+* Detect likely food items
+* Estimate portions
+* Suggest calories and nutrients
+* Display a confidence score
+* Let the user edit every detected ingredient and quantity
+* Require user confirmation before saving
+* Preserve the original image only with explicit consent
+* Never describe the result as medically or nutritionally exact
+
+Keep the AI provider behind a server-side interface so it can later use OpenAI, Gemini, or another vision model.
+
+This is an estimation assistant, not an authoritative calorie measurement system.
+
+### 6. Food quality score
+
+Create an original, transparent nutritional score.
+
+Do not reproduce any proprietary scoring system.
+
+The score should consider configurable factors such as:
+
+* Protein
+* Fiber
+* Energy density
+* Added sugar
+* Saturated fat
+* Sodium
+* Degree of processing
+* Portion size
+
+Display the factors that affected the score. Never label food simply as “good” or “bad.”
+
+Write unit tests for the score.
+
+### 7. Recipes and meal planning
+
+Support:
+
+* Recipe browsing
+* User-created recipes
+* Ingredients and portions
+* Nutritional calculation per serving
+* Cooking instructions
+* Preparation time
+* Dietary filters
+* Allergy filters
+* Favorite recipes
+* Weekly meal planning
+* Adding planned meals directly to the diary
+* Automatic grocery-list generation
+* Combining identical grocery items
+* Checking off purchased products
+
+Do not scrape or copy recipes from commercial applications.
+
+Seed the application only with original or appropriately licensed sample recipes.
+
+### 8. Intermittent fasting
+
+Support configurable plans including:
+
+* 12:12
+* 14:10
+* 16:8
+* 18:6
+* 20:4
+* 5:2
+* Alternate-day fasting
+* Custom schedules
+
+Include:
+
+* Fasting timer
+* Start and stop controls
+* Notifications
+* Fasting history
+* Streaks
+* Notes
+* Safety information
+
+### 9. Activity and health data
+
+Design integrations for:
+
+* Apple HealthKit
+* Android Health Connect
+* Manual step entry
+* Manual exercise entry
+
+Import only data types explicitly authorized by the user.
+
+Prevent duplicate activities when data comes from more than one source.
+
+Keep health-platform integrations isolated behind separate adapters.
+
+### 10. Progress and analytics
+
+Create analytics for:
+
+* Weight
+* Calories
+* Macronutrients
+* Micronutrients
+* Water
+* Steps
+* Exercise
+* Fasting
+* Mood
+* Goal adherence
+* Weekly and monthly averages
+* Trend lines
+* Estimated progress toward goal
+
+Support at least two years of history.
+
+Allow CSV and JSON export.
+
+Make it clear which values are recorded, calculated, or estimated.
+
+### 11. Notifications
+
+Support configurable reminders for:
+
+* Meals
+* Water
+* Weigh-ins
+* Fasting start
+* Fasting end
+* Goal review
+* Incomplete diary entries
+
+Do not send manipulative, shaming, or guilt-inducing notifications.
+
+### 12. Privacy and account control
+
+Include:
+
+* Email authentication
+* Apple sign-in architecture
+* Google sign-in architecture
+* Password reset
+* Data export
+* Account deletion
+* Consent management
+* Privacy settings
+* Image retention settings
+* Audit-friendly database structure
+
+Treat weight, food, mood, activity, and health-platform data as sensitive personal information.
+
+## DESIGN REQUIREMENTS
+
+Create an original modern interface.
+
+The visual direction should be:
+
+* Calm
+* Minimal
+* Premium
+* Data-rich without looking crowded
+* Easy to use with one hand
+* Suitable for users aged 18–70
+* Clear enough for someone who is not technically experienced
+
+Use a bottom navigation structure containing approximately:
+
+* Today
+* Diary
+* Progress
+* Plans
+* Profile
+
+Do not imitate the exact YAZIO interface.
+
+Create reusable components, spacing tokens, typography tokens, semantic colors, cards, charts, loading states, empty states, errors, and skeleton screens.
+
+## ENGINEERING REQUIREMENTS
+
+Before writing application code:
+
+1. Inspect the repository.
+2. Create `AGENTS.md` with permanent project conventions.
+3. Create `docs/PRODUCT_SPEC.md`.
+4. Create `docs/ARCHITECTURE.md`.
+5. Create `docs/DATA_MODEL.md`.
+6. Create `docs/SECURITY_AND_PRIVACY.md`.
+7. Create `docs/ROADMAP.md`.
+8. Create `docs/TEST_STRATEGY.md`.
+9. Create `docs/API_AND_DATA_SOURCES.md`.
+10. Create a milestone-based implementation plan.
+
+The roadmap must separate the project into small independently testable milestones.
+
+Recommended milestone order:
+
+1. Project foundation and design system
+2. Authentication and profile
+3. Manual food diary
+4. Goals and calorie calculations
+5. Food database and search
+6. Barcode scanning
+7. Weight, water, and progress charts
+8. Recipes and grocery lists
+9. Meal planning
+10. Fasting and mood tracking
+11. HealthKit and Health Connect
+12. AI photo logging
+13. Export, account deletion, privacy controls
+14. Performance, accessibility, security review, and release preparation
+
+For each milestone provide:
+
+* Scope
+* Files and modules
+* Database changes
+* API changes
+* Tests
+* Risks
+* Acceptance criteria
+* Dependencies on later milestones
+
+## CONSTRAINTS
+
+* Do not implement the entire application in a single task.
+* Do not create fake buttons or non-functional UI without clearly marking it.
+* Do not use mock data in production paths.
+* Do not introduce a dependency without explaining why it is needed.
+* Do not silently change the selected architecture.
+* Do not store secrets in the repository.
+* Do not make health or medical claims.
+* Do not copy proprietary application content.
+* Prefer simple maintainable solutions over excessive abstraction.
+* Keep business logic outside UI components.
+* Make calorie and nutrient calculations deterministic and testable.
+* Ensure all database tables use appropriate Row Level Security policies.
+* Use database migrations rather than manual database changes.
+
+## DONE WHEN
+
+For this planning task, do not implement the application yet.
+
+The task is complete when the repository contains a coherent, technically realistic specification, architecture, database model, privacy model, testing plan, and milestone roadmap.
+
+At the end:
+
+1. Summarize the proposed architecture.
+2. List major technical risks.
+3. Identify features requiring external accounts, APIs, or developer credentials.
+4. Identify decisions that can safely be deferred.
+5. Recommend the exact scope of Milestone 1.
+6. Report every file created or modified.

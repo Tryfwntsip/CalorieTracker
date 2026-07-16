@@ -4,7 +4,28 @@ Personal, **single-user, local-first** nutrition & lifestyle tracker for iOS/And
 
 **No accounts, no backend, no cloud, no API keys, no ads, no telemetry.** All data lives in the on-device SQLite database, which is the primary and authoritative store. The app works fully offline except optional lookups (e.g. a previously unknown barcode).
 
-**Start here:** [AGENTS.md](AGENTS.md) (project rules) → [docs/ROADMAP.md](docs/ROADMAP.md) (current milestone).
+**Start here:** [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md) (product specification) → [docs/ROADMAP.md](docs/ROADMAP.md) (current milestone).
+
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><strong>Today</strong></td>
+    <td align="center"><strong>Diary</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/today.png" width="320" alt="Today dashboard with daily calories and nutrition summary" /></td>
+    <td><img src="docs/screenshots/diary.png" width="320" alt="Food diary with meals and daily nutrition totals" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Progress</strong></td>
+    <td align="center"><strong>Plans</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/progress.png" width="320" alt="Progress charts for weight, nutrition, activity, and mood" /></td>
+    <td><img src="docs/screenshots/plans.png" width="320" alt="Meal planning and intermittent fasting tools" /></td>
+  </tr>
+</table>
 
 ## Docs
 

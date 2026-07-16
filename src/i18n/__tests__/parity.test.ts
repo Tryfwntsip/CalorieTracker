@@ -23,9 +23,11 @@ describe('i18n key parity (AGENTS.md rule 12)', () => {
         const value = path
           .split('.')
           .reduce<unknown>((acc, k) => (acc as Record<string, unknown>)[k], obj);
-        expect({ locale, path, ok: typeof value === 'string' && value.trim().length > 0 }).toEqual(
-          { locale, path, ok: true },
-        );
+        expect({ locale, path, ok: typeof value === 'string' && value.trim().length > 0 }).toEqual({
+          locale,
+          path,
+          ok: true,
+        });
       }
     };
     check(en, 'en');

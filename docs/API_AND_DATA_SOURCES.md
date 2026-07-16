@@ -4,14 +4,14 @@ Status: revised 2026-07-16 — local-first. **No API keys, external accounts, or
 
 ## 1. Source overview
 
-| Source | Used for | Key/account | Cost | Status |
-|---|---|---|---|---|
-| **Local Greek food & recipe DB** (ours) | Greek staples, Greek-language search, seed recipes | — | authoring effort | primary source, always offline |
-| **Open Food Facts (OFF)** | unknown-barcode lookup; optional online text search | **none** (custom User-Agent only) | free | optional, cache-through |
-| User-created foods/recipes | everything personal | — | — | always offline |
-| Vision provider (OpenAI or Gemini) | M12 optional photo estimation | **user-supplied key**, entered at runtime | user's own | optional, off by default |
-| Apple HealthKit / Android Health Connect | M11 steps/workouts/weight | free Apple ID personal team for dev builds | free | optional, device-local |
-| ~~USDA FoodData Central~~ | extra generic-food source | free key | free | **deferred** — only if local+OFF coverage proves insufficient |
+| Source                                   | Used for                                            | Key/account                                | Cost             | Status                                                        |
+| ---------------------------------------- | --------------------------------------------------- | ------------------------------------------ | ---------------- | ------------------------------------------------------------- |
+| **Local Greek food & recipe DB** (ours)  | Greek staples, Greek-language search, seed recipes  | —                                          | authoring effort | primary source, always offline                                |
+| **Open Food Facts (OFF)**                | unknown-barcode lookup; optional online text search | **none** (custom User-Agent only)          | free             | optional, cache-through                                       |
+| User-created foods/recipes               | everything personal                                 | —                                          | —                | always offline                                                |
+| Vision provider (OpenAI or Gemini)       | M12 optional photo estimation                       | **user-supplied key**, entered at runtime  | user's own       | optional, off by default                                      |
+| Apple HealthKit / Android Health Connect | M11 steps/workouts/weight                           | free Apple ID personal team for dev builds | free             | optional, device-local                                        |
+| ~~USDA FoodData Central~~                | extra generic-food source                           | free key                                   | free             | **deferred** — only if local+OFF coverage proves insufficient |
 
 ## 2. Local Greek food & recipe DB
 
@@ -45,9 +45,9 @@ Status: revised 2026-07-16 — local-first. **No API keys, external accounts, or
 
 ## 7. Accounts/credentials checklist
 
-| Item | Needed by | Notes |
-|---|---|---|
-| — nothing — | M2–M10, M13, M14 | zero accounts, zero keys |
-| Free Apple ID (personal team) | M6/M11 dev builds on a real iPhone | already have; 7-day re-sign |
-| OFF User-Agent contact email | M6 | just a string in the request header, no signup |
-| OpenAI **or** Gemini key | M12 only, optional | user-supplied, runtime-entered; milestone can be skipped |
+| Item                          | Needed by                          | Notes                                                    |
+| ----------------------------- | ---------------------------------- | -------------------------------------------------------- |
+| — nothing —                   | M2–M10, M13, M14                   | zero accounts, zero keys                                 |
+| Free Apple ID (personal team) | M6/M11 dev builds on a real iPhone | already have; 7-day re-sign                              |
+| OFF User-Agent contact email  | M6                                 | just a string in the request header, no signup           |
+| OpenAI **or** Gemini key      | M12 only, optional                 | user-supplied, runtime-entered; milestone can be skipped |

@@ -12,15 +12,16 @@ Cross-references: PRODUCT_SPEC (features), ARCHITECTURE, DATA_MODEL (SQLite sche
 
 Expo SDK 57 + TS strict + Expo Router; tokens/themes; i18n en/el; UI kit; 5-tab shell with honest placeholders; lib (logger) + domain/dates; ESLint/Jest/CI. 47 tests green.
 
-## M2 — Local SQLite foundation
+## M2 — Local SQLite foundation ✅
 
 **Scope:** expo-sqlite setup; database initialization on first launch; **versioned migrations** (PRAGMA `user_version`, ordered, transactional, tested); repository/service layer (typed CRUD, Zod-validated rows, no SQL outside `src/db` + repositories); tables: **profile, settings, foods, food_portions, diary_days, diary_entries, weight_records, water_records, scanned_products, barcode_scan_history**; `created_at`/`updated_at` where appropriate; foreign keys ON + indexes; **development-only seed data**; unit + integration tests for initialization, migrations, and repositories. No UI beyond existing placeholders.
-**Files/modules:** `src/db/` (client, migration runner, `migrations/001_*.ts`…, `seed/dev.ts`), `src/repositories/*`, `src/domain/schemas/*`.
+**Files/modules:** `src/db/` (client, migration runner, `migrations/001_*.ts`…, `seed/dev.ts`), `src/repositories/*`, `src/schemas/*`, `src/types/*`.
 **DB changes:** full M2 schema (DATA_MODEL §2–§4).
 **API changes:** none (no network in this milestone).
 **Tests:** migration runner (fresh install; stepwise upgrades; failed migration rolls back); FK cascade behavior; CRUD round-trip per repository; seed idempotency + prod-guard; `PRAGMA foreign_keys` verified ON.
 **Risks:** migration discipline from day one (getting `user_version` flow right); date/UUID conventions — reuse `domain/dates` and UUIDv7 strings.
 **Acceptance criteria:**
+
 1. First launch creates the DB and applies all migrations; relaunch is a no-op; `user_version` equals the latest migration number.
 2. A deliberately failing test migration leaves the DB at the previous version (transaction rollback) with a typed error.
 3. All ten tables exist with the FKs and indexes specified in DATA_MODEL; foreign key enforcement is ON in every connection.
@@ -29,6 +30,7 @@ Expo SDK 57 + TS strict + Expo Router; tokens/themes; i18n en/el; UI kit; 5-tab 
 6. Dev-only seeds populate sample Greek foods + one demo diary day **only** in `__DEV__` and only into an empty DB; production builds never seed.
 7. Full offline: airplane-mode run of the entire suite of app flows (placeholders + DB init) works.
 8. `typecheck`, `lint`, `test` green; DB integration tests run against real SQLite (in-memory) in CI.
+
 **Depends on:** M1. **Feeds:** everything.
 
 ## M3 — Personal profile & calorie targets (local, no auth)
@@ -104,13 +106,13 @@ M1 → M2 → M3 → M4 → {M5, M7, M10, M11} ; M5 → {M6, M8, M12*} ; M8 → 
 
 ## Deferred decisions
 
-| Decision | Decide at |
-|---|---|
-| App name & final branding/icon | ≤M14 |
-| Chart library | M7 |
-| Vision provider + whether M12 happens at all | M12 (user's call) |
-| Health module libraries | M11 spike |
-| SQLCipher (encrypted DB) | post-M14 if desired |
+| Decision                                                    | Decide at                                      |
+| ----------------------------------------------------------- | ---------------------------------------------- |
+| App name & final branding/icon                              | ≤M14                                           |
+| Chart library                                               | M7                                             |
+| Vision provider + whether M12 happens at all                | M12 (user's call)                              |
+| Health module libraries                                     | M11 spike                                      |
+| SQLCipher (encrypted DB)                                    | post-M14 if desired                            |
 | USDA FoodData Central as an extra source (needs a free key) | only if local+OFF coverage proves insufficient |
 
 ## Explicitly out of scope (permanent, per user decision)

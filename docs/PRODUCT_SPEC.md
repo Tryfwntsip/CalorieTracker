@@ -36,6 +36,7 @@ Collected: age, biological sex (male / female / prefer not to say), height, curr
 Output: initial daily calorie target and macro split (see §5). Every step skippable except the minimum needed for the calculation (age or DOB, sex or "not specified" fallback, height, weight, goal, activity); "prefer not to say" for sex uses the average of male/female equations and says so.
 
 **Safety guardrails (deterministic, tested):**
+
 - Informational disclaimer shown at the calculation step and in Profile: estimates are informational, not medical advice; users with medical conditions, pregnancy, or history of disordered eating should consult a professional.
 - **Blocked:** computed or manually set daily targets below 1,200 kcal (any adult), or weekly loss rate > 1.5% of current body weight, or goal weight implying BMI < 17.
 - **Confirmation required (extra explicit step):** targets 1,200–1,500 kcal, weekly change > 0.75 kg, or goal BMI 17–18.5.
@@ -54,6 +55,7 @@ Profile is editable at any time; goal changes are **versioned** (history kept) s
 ## 6. Diary (F3)
 
 A diary day (local date) contains ordered sections:
+
 - Meal sections — default: Breakfast, Morning snack, Lunch, Afternoon snack, Dinner; plus user-added extra meals.
 - Water (ml, quick-add increments configurable).
 - Exercise (manual entries: type, duration, estimated kcal; later merged with health-platform imports).
@@ -80,6 +82,7 @@ Offline: the entire local catalog (Greek DB, custom foods, anything previously l
 ## 8. External food data (F5)
 
 Providers behind a common `FoodDataProvider` interface; no keys, no accounts, no proxy server:
+
 - **Local Greek food & recipe DB** — the primary source; curated, originally authored; shipped as seed migrations.
 - **Open Food Facts** — optional online lookup for unknown barcodes and packaged-food text search (keyless; ODbL attribution honored); every hit is cached into the local DB so it works offline afterwards.
 - USDA FoodData Central is deferred (needs a key) and only reconsidered if coverage proves insufficient.

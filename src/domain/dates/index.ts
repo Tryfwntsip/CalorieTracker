@@ -13,9 +13,7 @@ export function isDayKey(value: string): value is DayKey {
   // Reject impossible dates like 2026-02-30 via round-trip.
   const [y, m, d] = value.split('-').map(Number);
   const date = new Date(Date.UTC(y!, m! - 1, d!));
-  return (
-    date.getUTCFullYear() === y && date.getUTCMonth() === m! - 1 && date.getUTCDate() === d
-  );
+  return date.getUTCFullYear() === y && date.getUTCMonth() === m! - 1 && date.getUTCDate() === d;
 }
 
 /** Local calendar date of the given instant, in the device timezone. */

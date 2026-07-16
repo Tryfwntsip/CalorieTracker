@@ -8,15 +8,15 @@ Personal, **single-user, local-first** nutrition & lifestyle tracker for iOS/And
 
 ## Docs
 
-| Doc | Contents |
-|---|---|
-| [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md) | Feature specification |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Local-first stack, layering, adapters, decisions log |
-| [docs/DATA_MODEL.md](docs/DATA_MODEL.md) | SQLite schema, migrations, canonical nutrients |
-| [docs/SECURITY_AND_PRIVACY.md](docs/SECURITY_AND_PRIVACY.md) | Local threat model, data control |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | Milestones with scope/tests/acceptance |
-| [docs/TEST_STRATEGY.md](docs/TEST_STRATEGY.md) | Test layers, E2E journeys, gates |
-| [docs/API_AND_DATA_SOURCES.md](docs/API_AND_DATA_SOURCES.md) | Local Greek DB, Open Food Facts, optional providers |
+| Doc                                                          | Contents                                             |
+| ------------------------------------------------------------ | ---------------------------------------------------- |
+| [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md)                 | Feature specification                                |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                 | Local-first stack, layering, adapters, decisions log |
+| [docs/DATA_MODEL.md](docs/DATA_MODEL.md)                     | SQLite schema, migrations, canonical nutrients       |
+| [docs/SECURITY_AND_PRIVACY.md](docs/SECURITY_AND_PRIVACY.md) | Local threat model, data control                     |
+| [docs/ROADMAP.md](docs/ROADMAP.md)                           | Milestones with scope/tests/acceptance               |
+| [docs/TEST_STRATEGY.md](docs/TEST_STRATEGY.md)               | Test layers, E2E journeys, gates                     |
+| [docs/API_AND_DATA_SOURCES.md](docs/API_AND_DATA_SOURCES.md) | Local Greek DB, Open Food Facts, optional providers  |
 
 ## Stack
 
@@ -43,7 +43,8 @@ npm test
 ## Status
 
 - ✅ M1 — Foundation & design system (tokens, themes, i18n en/el, UI kit, 5-tab shell)
-- ⏭️ M2 — Local SQLite foundation (migrations, repositories, core tables, dev seeds)
+- ✅ M2 — Local SQLite foundation (migrations, repositories, core tables, dev seeds)
+- ⏭️ M3 — Personal profile and calorie targets
 
 ## Disclaimer
 

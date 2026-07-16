@@ -25,6 +25,11 @@ export const el: Messages = {
     genericTitle: 'Κάτι πήγε στραβά',
     genericBody: 'Δοκίμασε ξανά.',
   },
+  database: {
+    preparing: 'Προετοιμασία των τοπικών δεδομένων…',
+    errorTitle: 'Τα τοπικά δεδομένα δεν είναι διαθέσιμα',
+    errorBody: 'Τα δεδομένα σου δεν άλλαξαν. Δοκίμασε ξανά την προετοιμασία της τοπικής βάσης.',
+  },
   profile: {
     title: 'Προφίλ',
     appearance: 'Εμφάνιση',

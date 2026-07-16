@@ -23,14 +23,18 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: t('tabs.today'),
-          tabBarIcon: ({ color, size }) => <Ionicons name="sunny-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="sunny-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="diary"
         options={{
           title: t('tabs.diary'),
-          tabBarIcon: ({ color, size }) => <Ionicons name="book-outline" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="book-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen

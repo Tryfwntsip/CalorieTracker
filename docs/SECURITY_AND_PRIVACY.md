@@ -21,11 +21,11 @@ Threats: device theft/loss (mitigated by OS-level encryption + optional future S
 
 ## 4. Network calls (all optional, all user-visible)
 
-| Call | When | What is sent | Mitigations |
-|---|---|---|---|
-| Open Food Facts barcode/text lookup | unknown barcode scanned / optional online search | the barcode or search term only — never personal data | TLS; custom User-Agent; response Zod-validated + sanitized before persistence; cached so repeat lookups stay offline |
-| Vision provider (M12, optional, off by default) | user photographs a meal AND has entered their own API key | the meal photo (EXIF/GPS stripped on device) | user-supplied key in secure-store; direct TLS call; image not retained unless opted in; feature invisible without a key |
-| Health platforms (M11) | user enables per-type read access | nothing leaves the device — OS-local reads | per-type OS permission prompts; read-only |
+| Call                                            | When                                                      | What is sent                                          | Mitigations                                                                                                             |
+| ----------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Open Food Facts barcode/text lookup             | unknown barcode scanned / optional online search          | the barcode or search term only — never personal data | TLS; custom User-Agent; response Zod-validated + sanitized before persistence; cached so repeat lookups stay offline    |
+| Vision provider (M12, optional, off by default) | user photographs a meal AND has entered their own API key | the meal photo (EXIF/GPS stripped on device)          | user-supplied key in secure-store; direct TLS call; image not retained unless opted in; feature invisible without a key |
+| Health platforms (M11)                          | user enables per-type read access                         | nothing leaves the device — OS-local reads            | per-type OS permission prompts; read-only                                                                               |
 
 Never sent anywhere: diary contents, weight, mood, profile, identifiers. There are no analytics/crash SDKs.
 

@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { DatabaseProvider } from '@/db/DatabaseProvider';
 import { initI18n } from '@/lib/i18n';
 import { logger } from '@/lib/logger';
 import { ThemeProvider, useTheme } from '@/ui/theme';
@@ -45,7 +46,9 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <RootNavigator />
+        <DatabaseProvider>
+          <RootNavigator />
+        </DatabaseProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

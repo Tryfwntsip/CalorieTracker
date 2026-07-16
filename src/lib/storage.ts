@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
- * Thin wrapper over AsyncStorage for small app preferences (theme, language).
- * NOT for sensitive data (tokens go to expo-secure-store in M2) and NOT for
- * user logs (those live in SQLite from M3).
+ * Thin wrapper over AsyncStorage for the startup cache of theme and language.
+ * SQLite is authoritative from M2; this cache lets the app render its saved
+ * appearance while the database is opening. Never store sensitive data here.
  */
 const PREFIX = 'ct:';
 

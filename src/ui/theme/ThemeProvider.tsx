@@ -2,7 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
 
-import { getPreference, setPreference } from '@/lib/storage';
+import { getPreference } from '@/lib/storage';
+import { persistTheme } from '@/services/settingsPreferences';
 import { darkColors, lightColors, type SemanticColors } from '@/ui/tokens';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
@@ -35,7 +36,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setPref = useCallback((pref: ThemePreference) => {
     setPreferenceState(pref);
-    void setPreference(STORAGE_KEY, pref);
+    void persistTheme(pref);
   }, []);
 
   const scheme: ResolvedScheme =

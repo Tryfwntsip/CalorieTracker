@@ -1,11 +1,13 @@
-import { fireEvent, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
 
 import { ProfileScreen } from '@/features/profile/ProfileScreen';
 import { renderWithProviders, testI18n } from '@/test/render';
 
 describe('ProfileScreen', () => {
   afterEach(async () => {
-    await testI18n.changeLanguage('en');
+    await act(async () => {
+      await testI18n.changeLanguage('en');
+    });
   });
 
   it('shows appearance settings and the medical disclaimer', async () => {

@@ -8,19 +8,19 @@ The device's **SQLite database is the primary and authoritative store**. There i
 
 ## 2. Stack
 
-| Concern | Choice | Why |
-|---|---|---|
-| App framework | React Native + **Expo** SDK 57 (dev builds) | single codebase iOS/Android; camera/health need dev builds |
-| Language | TypeScript, `strict: true` | mandated |
-| Routing | **Expo Router** (file-based, typed) | mandated |
-| Database | **expo-sqlite** — versioned migrations, FK ON | authoritative store; queryable, offline, fast |
-| Validation | **Zod** at all boundaries (DB rows, API responses, forms) | mandated |
-| Async/server-state cache | TanStack Query (introduced in M4 when the diary needs it) | caching/invalidation around repository calls |
-| UI state | Component state / small Zustand slices if needed | minimal |
-| i18n | i18next + expo-localization | en/el |
-| Charts | Victory Native or equivalent (final pick M7) | perf on long histories |
-| Testing | Jest (jest-expo) + RNTL + real SQLite integration tests + Maestro E2E | see TEST_STRATEGY |
-| Lint/format | ESLint (zero warnings) + Prettier | CI gate |
+| Concern                  | Choice                                                                | Why                                                        |
+| ------------------------ | --------------------------------------------------------------------- | ---------------------------------------------------------- |
+| App framework            | React Native + **Expo** SDK 57 (dev builds)                           | single codebase iOS/Android; camera/health need dev builds |
+| Language                 | TypeScript, `strict: true`                                            | mandated                                                   |
+| Routing                  | **Expo Router** (file-based, typed)                                   | mandated                                                   |
+| Database                 | **expo-sqlite** — versioned migrations, FK ON                         | authoritative store; queryable, offline, fast              |
+| Validation               | **Zod** at all boundaries (DB rows, API responses, forms)             | mandated                                                   |
+| Async/server-state cache | TanStack Query (introduced in M4 when the diary needs it)             | caching/invalidation around repository calls               |
+| UI state                 | Component state / small Zustand slices if needed                      | minimal                                                    |
+| i18n                     | i18next + expo-localization                                           | en/el                                                      |
+| Charts                   | Victory Native or equivalent (final pick M7)                          | perf on long histories                                     |
+| Testing                  | Jest (jest-expo) + RNTL + real SQLite integration tests + Maestro E2E | see TEST_STRATEGY                                          |
+| Lint/format              | ESLint (zero warnings) + Prettier                                     | CI gate                                                    |
 
 Every new dependency needs a written justification (AGENTS.md rule 11).
 
@@ -44,8 +44,10 @@ CalorieTracker/
 │   │   ├── vision/           # optional AI provider client (M12, user key)
 │   │   ├── health/           # HealthKit / Health Connect adapters (M11)
 │   │   └── notifications/
-│   ├── db/                   # sqlite client, migration runner, migrations/, seed/
+│   ├── db/                   # sqlite client, initialization, migrations/, seed/
 │   ├── repositories/         # ALL data access; one repo per aggregate
+│   ├── schemas/              # Zod schemas for persisted records
+│   ├── types/                # shared domain/persistence types
 │   ├── lib/                  # logger, storage, i18n init
 │   ├── i18n/                 # en.ts, el.ts
 │   └── test/                 # test utils, fixtures
@@ -73,6 +75,12 @@ src/app routes → src/features → src/services + src/repositories → src/doma
 - IDs: UUIDv7 strings generated in-app.
 - Seeds: `src/db/seed/dev.ts` (dev-only, `__DEV__`-gated, idempotent, empty-DB-only); production seed data (Greek food catalog, M5+) ships as normal migrations/seed modules.
 - Analytics on long histories via SQL aggregate queries (M7) — raw rows never fanned out to JS for charting.
+- App startup is gated by `DatabaseProvider`: tabs do not render until initialization succeeds. A localized loading state and safe, retryable error state preserve the M1 theme and navigation.
+- Theme/language live in `settings`; the small M1 AsyncStorage values are imported on first M2 launch and retained only as a pre-database startup cache. Preference changes update both, with SQLite authoritative.
+
+### Integration-test runtime
+
+Production always uses `expo-sqlite`. Jest runs on Node, where Expo's native module is unavailable, so DB integration tests use Node's built-in `node:sqlite` adapter. This is a genuine in-memory SQLite engine—not a mock—and it executes the exact production migration SQL and repository contracts. The adapter distinction is limited to native async calls versus synchronous Node calls wrapped by the shared async `Database` interface.
 
 ## 6. External providers — optional, adapter-isolated
 
@@ -111,14 +119,14 @@ Dev: Expo dev tools + `src/lib/logger` (leveled, redacting). **No third-party cr
 
 ## 12. Decisions log
 
-| # | Decision | Status |
-|---|---|---|
-| D1 | Single app repo, no monorepo | Accepted |
-| D2 | **SQLite is the primary, authoritative database; no backend, no sync** | Accepted (2026-07-16, supersedes the old Supabase design) |
-| D3 | ~~Supabase/Edge Functions gateway~~ | **Dropped** — no backend |
-| D4 | Nutrients per 100 g/ml canonical + JSON micros | Accepted |
-| D5 | Diary entries snapshot nutrients at log time | Accepted |
-| D6 | Charts lib final pick | Deferred to M7 |
-| D8 | App name/branding | Deferred |
-| D9 | Personal use only: no accounts/auth/cloud/subscriptions/ads/telemetry/store distribution | Accepted |
-| D10 | OFF called directly (keyless); USDA deferred; vision key user-supplied at runtime | Accepted |
+| #   | Decision                                                                                 | Status                                                    |
+| --- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| D1  | Single app repo, no monorepo                                                             | Accepted                                                  |
+| D2  | **SQLite is the primary, authoritative database; no backend, no sync**                   | Accepted (2026-07-16, supersedes the old Supabase design) |
+| D3  | ~~Supabase/Edge Functions gateway~~                                                      | **Dropped** — no backend                                  |
+| D4  | Nutrients per 100 g/ml canonical + JSON micros                                           | Accepted                                                  |
+| D5  | Diary entries snapshot nutrients at log time                                             | Accepted                                                  |
+| D6  | Charts lib final pick                                                                    | Deferred to M7                                            |
+| D8  | App name/branding                                                                        | Deferred                                                  |
+| D9  | Personal use only: no accounts/auth/cloud/subscriptions/ads/telemetry/store distribution | Accepted                                                  |
+| D10 | OFF called directly (keyless); USDA deferred; vision key user-supplied at runtime        | Accepted                                                  |

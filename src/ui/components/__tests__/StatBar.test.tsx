@@ -33,7 +33,9 @@ describe('StatBar', () => {
   });
 
   it('exposes an accessible progress value', async () => {
-    await renderWithProviders(<StatBar label="Fat" valueText="10 / 60 g" progress={0.25} testID="bar" />);
+    await renderWithProviders(
+      <StatBar label="Fat" valueText="10 / 60 g" progress={0.25} testID="bar" />,
+    );
     expect(screen.getByTestId('bar')).toHaveAccessibilityValue({ now: 25 });
   });
 });

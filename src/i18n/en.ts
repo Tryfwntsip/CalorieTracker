@@ -27,6 +27,11 @@ export const en = {
     genericTitle: 'Something went wrong',
     genericBody: 'Please try again.',
   },
+  database: {
+    preparing: 'Preparing your local data…',
+    errorTitle: 'Local data is unavailable',
+    errorBody: 'Your data was not changed. Try preparing the local database again.',
+  },
   profile: {
     title: 'Profile',
     appearance: 'Appearance',

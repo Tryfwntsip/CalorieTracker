@@ -10,12 +10,13 @@ Status: revised 2026-07-16 — **SQLite is the primary and authoritative databas
 - Diary dates: local calendar day `TEXT 'YYYY-MM-DD'` (see `src/domain/dates`).
 - Soft deletes only where undo/history requires it (`deleted_at TEXT NULL` on diary_entries); everything else hard-deletes.
 - Nutrients: `REAL` per **100 g/ml**; `NULL` = unknown (never 0). Energy kcal, mass g, volume ml — metric only.
-- Enums are `TEXT` with `CHECK (col IN (...))` constraints, mirrored by Zod schemas in `src/domain/schemas/`.
+- Enums are `TEXT` with `CHECK (col IN (...))` constraints, mirrored by Zod schemas in `src/schemas/`.
 - Every table is created inside a migration that also creates its indexes.
 
 ## 2. M2 schema — core tables
 
 **profile** — exactly one row (`CHECK (id = 1)`)
+
 ```
 id INTEGER PK CHECK(id=1), date_of_birth TEXT NULL ('YYYY-MM-DD'),
 sex TEXT CHECK(sex IN ('male','female','unspecified')) DEFAULT 'unspecified',
@@ -27,9 +28,11 @@ calorie_target INTEGER NULL, protein_target_g INTEGER NULL,
 carbs_target_g INTEGER NULL, fat_target_g INTEGER NULL,
 created_at TEXT, updated_at TEXT
 ```
+
 Age is derived from `date_of_birth` (stays correct over time). `current_weight_kg` mirrors the latest weight_record (repository keeps it in sync). Weekday calorie overrides arrive with M4 (`settings.weekday_calorie_overrides` JSON).
 
 **settings** — exactly one row (`CHECK (id = 1)`)
+
 ```
 id INTEGER PK CHECK(id=1),
 language TEXT CHECK(language IN ('en','el')) DEFAULT 'en',
@@ -39,9 +42,11 @@ water_goal_ml INTEGER DEFAULT 2000, week_starts_on INTEGER DEFAULT 1,
 diary_section_order TEXT NULL (JSON), weekday_calorie_overrides TEXT NULL (JSON),
 created_at TEXT, updated_at TEXT
 ```
+
 (Theme/language currently live in AsyncStorage from M1; M2/M3 migrate them here as the single source of truth.)
 
 **foods**
+
 ```
 id TEXT PK, name TEXT NOT NULL, name_el TEXT NULL, brand TEXT NULL,
 barcode TEXT NULL, source TEXT CHECK(source IN ('user','greek_seed','off')) NOT NULL,
@@ -60,6 +65,7 @@ INDEX idx_foods_name / idx_foods_name_el (accent-insensitive search strategy fin
 ```
 
 **food_portions**
+
 ```
 id TEXT PK, food_id TEXT NOT NULL REFERENCES foods(id) ON DELETE CASCADE,
 label TEXT NOT NULL, label_el TEXT NULL, grams REAL NOT NULL
@@ -67,12 +73,14 @@ INDEX idx_portions_food ON food_portions(food_id)
 ```
 
 **diary_days** — one row per calendar day that has any content
+
 ```
 date TEXT PK ('YYYY-MM-DD'), mood INTEGER NULL CHECK(mood BETWEEN 1 AND 5),
 note TEXT NULL, created_at TEXT, updated_at TEXT
 ```
 
 **diary_entries**
+
 ```
 id TEXT PK, day_date TEXT NOT NULL REFERENCES diary_days(date) ON DELETE CASCADE,
 section TEXT NOT NULL CHECK(section IN ('breakfast','morning_snack','lunch','afternoon_snack','dinner','extra')),
@@ -91,6 +99,7 @@ INDEX idx_entries_day ON diary_entries(day_date)
 ```
 
 **weight_records**
+
 ```
 id TEXT PK, day_date TEXT NOT NULL UNIQUE, weight_kg REAL NOT NULL,
 origin TEXT NOT NULL DEFAULT 'manual' CHECK(origin IN ('manual','healthkit','health_connect')),
@@ -98,6 +107,7 @@ external_uid TEXT NULL, created_at TEXT, updated_at TEXT
 ```
 
 **water_records**
+
 ```
 id TEXT PK, day_date TEXT NOT NULL, amount_ml INTEGER NOT NULL CHECK(amount_ml > 0),
 logged_at TEXT NOT NULL, created_at TEXT
@@ -105,6 +115,7 @@ INDEX idx_water_day ON water_records(day_date)
 ```
 
 **scanned_products** — normalized cache of external barcode lookups
+
 ```
 barcode TEXT PK, food_id TEXT NULL REFERENCES foods(id) ON DELETE SET NULL,
 source TEXT NOT NULL CHECK(source IN ('off')), raw_payload_json TEXT NULL,
@@ -112,6 +123,7 @@ fetched_at TEXT NOT NULL, created_at TEXT, updated_at TEXT
 ```
 
 **barcode_scan_history**
+
 ```
 id TEXT PK, barcode TEXT NOT NULL,
 status TEXT NOT NULL CHECK(status IN ('found_local','found_online','not_found','offline')),
@@ -146,9 +158,15 @@ Unchanged in spirit from the original design: fixed macro columns + `micros_json
 
 ## 6. Seed data
 
-- **Dev-only** (`src/db/seed/dev.ts`): ~20 sample Greek foods with portions + one demo diary day; runs only in `__DEV__`, only on an empty DB, idempotent.
+- **Dev-only** (`src/db/seed/dev.ts`): a small set of original Greek example foods with portions + one demo diary day; runs only in `__DEV__`, only when all relevant tables are empty, and is idempotent.
 - **Production catalog** (M5+): curated Greek foods/recipes shipped as versioned seed migrations (originally authored; no scraped/proprietary data).
 
 ## 7. Aggregation for analytics (M7)
 
 Daily-summary SQL view over diary_entries/water/weight/steps/exercise per day powers charts; queries stay in repositories; 2 years of history must render without materializing raw rows in JS.
+
+## 8. M2 implementation decisions
+
+- SQLite cannot express strict ISO-8601 or real-calendar validation cleanly with portable `CHECK` syntax, so date/timestamp shape is enforced by Zod on every repository read; enum, range, uniqueness, and relationship rules remain database constraints.
+- `food_portions` are deleted with their food (`CASCADE`). Historical diary entries and cached scan records keep their event rows when a food is removed, but their food reference becomes `NULL` (`SET NULL`). Deleting a diary day deletes its entries (`CASCADE`).
+- `food_portions` and append-style scan/water records follow the timestamp columns in §2; mutable aggregate roots maintain both timestamps through repositories. This avoids undocumented columns in the first released schema.

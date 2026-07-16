@@ -10,14 +10,14 @@ Status: Phase 1. Binding minimums; every milestone's acceptance criteria include
 
 ## 2. Layers & tools
 
-| Layer | Tool | Scope | Runs |
-|---|---|---|---|
-| Unit (domain) | Jest (jest-expo preset) | `src/domain/**` pure logic | every commit, CI |
-| Component/UI | Jest + React Native Testing Library | components render/interact; screens with mocked services | every commit, CI |
-| DB/integration | Jest against **real SQLite (in-memory)** | migration runner (fresh install, stepwise upgrades, rollback on failure), FK enforcement, CRUD round-trips per repository, seed guards | every commit, CI |
-| Contract/fixtures | Recorded real responses (OFF, vision) checked into `src/test/fixtures` | adapter mapper correctness against real payload shapes; refreshed deliberately, diff-reviewed | CI |
-| E2E | Maestro flows on dev builds | critical journeys (below) | nightly / pre-release |
-| Manual | Checklists | accessibility, notification tone, localization review | per milestone / release |
+| Layer             | Tool                                                                   | Scope                                                                                                                                  | Runs                    |
+| ----------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| Unit (domain)     | Jest (jest-expo preset)                                                | `src/domain/**` pure logic                                                                                                             | every commit, CI        |
+| Component/UI      | Jest + React Native Testing Library                                    | components render/interact; screens with mocked services                                                                               | every commit, CI        |
+| DB/integration    | Jest against **real SQLite (in-memory)**                               | migration runner (fresh install, stepwise upgrades, rollback on failure), FK enforcement, CRUD round-trips per repository, seed guards | every commit, CI        |
+| Contract/fixtures | Recorded real responses (OFF, vision) checked into `src/test/fixtures` | adapter mapper correctness against real payload shapes; refreshed deliberately, diff-reviewed                                          | CI                      |
+| E2E               | Maestro flows on dev builds                                            | critical journeys (below)                                                                                                              | nightly / pre-release   |
+| Manual            | Checklists                                                             | accessibility, notification tone, localization review                                                                                  | per milestone / release |
 
 ## 3. Critical E2E journeys (Maestro)
 
@@ -52,6 +52,7 @@ Status: Phase 1. Binding minimums; every milestone's acceptance criteria include
 ## 6. Test data & environments
 
 - Everything runs locally — there is no backend and no staging environment. DB tests use in-memory SQLite with the real migration set; E2E runs on dev builds with a fresh app install.
+- Production uses `expo-sqlite`; Node-based Jest integration tests use the genuine built-in `node:sqlite` engine through the same async database contract. No simplified SQLite mock is accepted.
 - Fixtures for foods use the Greek seed DB + frozen OFF payloads; vision fixtures (M12) are fixed images with recorded provider responses.
 
 ## 7. Non-functional checks

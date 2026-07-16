@@ -1,84 +1,53 @@
 # API_AND_DATA_SOURCES — CalorieTracker (working title)
 
-Status: Phase 1. All providers sit behind adapters (ARCHITECTURE §5); food/AI calls route through Edge Functions so keys stay server-side.
+Status: revised 2026-07-16 — local-first. **No API keys, external accounts, or paid services are required.** All network access is optional and adapter-isolated (ARCHITECTURE §6).
 
-## 1. Provider overview
+## 1. Source overview
 
-| Provider | Used for | Key | Cost | License |
+| Source | Used for | Key/account | Cost | Status |
 |---|---|---|---|---|
-| Open Food Facts (OFF) | Packaged foods, barcode lookup | none | free | **ODbL** (data), attribution required |
-| USDA FoodData Central (FDC) | Generic foods, detailed nutrients | free API key | free (rate-limited) | US public domain (CC0-like) |
-| Local Greek food & recipe DB | Greek staples, dishes, recipes | — (ours) | authoring effort | original / appropriately licensed |
-| Vision provider (OpenAI or Gemini) | Meal photo estimation | paid API key | per-call | provider ToS |
-| Apple HealthKit | steps, workouts, weight (iOS) | Apple dev account | — | platform rules |
-| Android Health Connect | steps, workouts, weight (Android) | — | — | platform rules |
+| **Local Greek food & recipe DB** (ours) | Greek staples, Greek-language search, seed recipes | — | authoring effort | primary source, always offline |
+| **Open Food Facts (OFF)** | unknown-barcode lookup; optional online text search | **none** (custom User-Agent only) | free | optional, cache-through |
+| User-created foods/recipes | everything personal | — | — | always offline |
+| Vision provider (OpenAI or Gemini) | M12 optional photo estimation | **user-supplied key**, entered at runtime | user's own | optional, off by default |
+| Apple HealthKit / Android Health Connect | M11 steps/workouts/weight | free Apple ID personal team for dev builds | free | optional, device-local |
+| ~~USDA FoodData Central~~ | extra generic-food source | free key | free | **deferred** — only if local+OFF coverage proves insufficient |
 
-## 2. Open Food Facts
+## 2. Local Greek food & recipe DB
 
-- Endpoints: product by barcode (`/api/v2/product/{barcode}`), search (`/api/v2/search` or SaaS search-a-licious). No key; **custom User-Agent required** (app name + contact email).
-- Rate courtesy: cache aggressively; the `food-gateway` persists normalized hits into `foods` so repeat lookups don't re-hit OFF.
-- Data quality: crowdsourced → mark rows `quality='partial'` unless completeness checks pass (has energy + macros); keep `nova_class` when present (feeds the score's processing factor).
-- **License obligations (ODbL):** visible attribution ("Data from Open Food Facts") on food detail screens sourced from OFF + in About; if we redistribute a derived food database, share-alike applies — our stored normalized copies of OFF rows must remain exportable/attributable. No mixing OFF rows into our proprietary Greek DB claims.
-- Useful fields → canonical mapping: `nutriments.energy-kcal_100g→energy_kcal`, `proteins_100g→protein_g`, `carbohydrates_100g→carbs_g`, `fat_100g→fat_g`, `saturated-fat_100g→sat_fat_g`, `fiber_100g→fiber_g`, `sugars_100g→sugar_g`, `salt_100g→salt_g`, `sodium_100g (g)→sodium_mg (×1000)`, `serving_quantity/serving_size→food_portions`. Micros when present map to §5 keys.
+- Originally authored entries (nutrients from public-domain composition sources) — never scraped from commercial apps; both `name` and `name_el` populated; `source='greek_seed'`, `quality='complete'`.
+- Dev seed (~20 foods) in M2; production catalog (~150 foods) ships in M5 as seed migrations; ~25 original recipes in M8.
+- This is the **primary** search source — the app must feel complete with the device offline.
 
-## 3. USDA FoodData Central
+## 3. Open Food Facts
 
-- Endpoints: `/v1/foods/search`, `/v1/food/{fdcId}`. API key (free, api.data.gov) — **server-side only**, default limit 1,000 req/h (fine behind gateway cache).
-- Data types priority: `Foundation` > `SR Legacy` > `Survey (FNDDS)` > `Branded` (Branded usually deferred to OFF). Mark Foundation/SR rows `quality='verified'`.
-- Nutrient numbers of interest (FDC nutrient ids → canonical): 1008→energy_kcal, 1003→protein_g, 1005→carbs_g, 1004→fat_g, 1258→sat_fat_g, 1292→mono_fat_g, 1293→poly_fat_g, 1079→fiber_g, 2000→sugar_g, 1093→sodium_mg (salt_g = sodium_mg×2.5/1000), 1253→cholesterol_mg, plus vitamin/mineral ids mapped in `food-gateway/mappings/usda.ts`.
-- Portions: `foodPortions[]` → `food_portions` (gramWeight).
-- English-only names → Greek search handled by our Greek DB + client-side alias table; do not machine-translate USDA names silently.
+- Product by barcode: `GET https://world.openfoodfacts.org/api/v2/product/{barcode}`; optional text search via `/api/v2/search`. No key; **custom User-Agent required** (app working title + a contact email — decided when M6 lands; no account needed).
+- Cache-through: every successful lookup is normalized into `foods` (+ `scanned_products` for barcodes) so repeats work offline forever.
+- Quality: crowdsourced → `quality='partial'` unless completeness checks pass (energy + macros present); keep `nova_class` for the food score.
+- **ODbL license obligations:** visible attribution ("Data from Open Food Facts") on OFF-sourced food detail screens + in About. Personal use keeps obligations minimal; we still honor attribution.
+- Field mapping (fixture-tested in the adapter): `energy-kcal_100g→energy_kcal` (kJ-only products converted ÷4.184), `proteins_100g→protein_g`, `carbohydrates_100g→carbs_g`, `fat_100g→fat_g`, `saturated-fat_100g→sat_fat_g`, `fiber_100g→fiber_g`, `sugars_100g→sugar_g`, `salt_100g→salt_g`, `sodium_100g (g)→sodium_mg ×1000`, `serving_quantity/size→food_portions`; micros to canonical keys when present; missing → NULL, never 0.
 
-## 4. Local Greek food & recipe DB
+## 4. Vision provider (M12 — optional, user's call)
 
-- Purpose: Greek staples (φέτα, γίγαντες, χόρτα, παστίτσιο…), Greek-labeled search, and seed recipes. **Originally authored** nutrient entries (from public-domain composition sources) — never scraped from commercial apps.
-- Stored as normal `foods` rows (`source='greek_db'`, `owner_user_id=null`, both `name` and `name_el` populated, `quality='complete'`), seeded via `supabase/seed/` scripts (idempotent, reviewed like code).
-- Seed recipes: original recipes with `title_el` + translated `title`, honest nutrition computed from ingredients.
-- Initial target: ~150 foods + ~25 recipes at M5/M8; grows continuously.
+- Interface: `analyzeMealPhoto({ image, locale }) → { items: [{ label, label_el, estimated_grams, confidence, nutrients }], overall_confidence }`, Zod-validated.
+- Direct client → provider HTTPS call using a **key the user enters in settings** (stored in expo-secure-store). No key → feature hidden. No proxy server exists.
+- Image downscaled (~1280 px) + EXIF-stripped before upload; never retained by the app unless opted in; provider choice (OpenAI vs Gemini) decided at M12 by whoever supplies the key.
+- Estimates only — mandatory user confirmation before anything reaches the diary.
 
-## 5. Canonical nutrient model (contract)
+## 5. Health platforms (M11)
 
-Defined in DATA_MODEL §4; the Zod schema `CanonicalNutrients` in `src/domain/schemas/nutrients.ts` is the single contract. Gateway mapping rules:
-- Missing value → `null` (never 0). Values per 100 g/ml only; provider per-serving values converted using gram weight or discarded if unconvertible.
-- Unit conversions centralized (µg/mg/g, kJ→kcal ÷4.184) in one tested module shared by all mappers.
-- Provenance recorded on every row: `source`, `external_id`, `source_updated_at`, `quality`. Conflicts across providers are surfaced (both results returned, ranked), **never merged**.
+- Read-only: steps, workouts, body mass. Per-type OS permission prompts; data stays on device; dedup rules in DATA_MODEL.
+- iOS dev builds with HealthKit entitlement work on a **free Apple ID personal team** (7-day re-sign). Android Health Connect needs no account.
 
-## 6. `food-gateway` Edge Function (client contract)
+## 6. Barcode scanning (M6)
 
-```
-POST /food-gateway  { op: 'searchText', query, locale, page }        → { results: FoodHit[] }
-POST /food-gateway  { op: 'barcode', barcode }                       → { result: FoodHit | null, alternatives: FoodHit[] }
-POST /food-gateway  { op: 'getById', source, externalId | foodId }   → { food: Food }
-```
-`FoodHit` = normalized food + provenance + portions. Behavior: check `foods` cache first; fan out to providers (Greek DB → OFF → USDA for text; OFF for barcode); persist normalized results; per-user rate limit; Zod-validated in/out. Auth: user JWT required.
+`expo-camera` (EAN-13/EAN-8/UPC-A/UPC-E) wrapped in a `BarcodeScanner` adapter; requires a dev build (not Expo Go). Variants normalized to GTIN-13 in one tested function. Lookup order: local `foods.barcode` → `scanned_products` cache → OFF (online only) → not-found flow (create custom food).
 
-## 7. Vision provider (`vision-analyze`)
+## 7. Accounts/credentials checklist
 
-- Interface: `analyzeMealPhoto({ imagePath, locale }) → { items: [{ label, label_el, estimated_grams, confidence, nutrients: CanonicalNutrients }], overall_confidence, disclaimer_key }`.
-- Provider selection by function env (`VISION_PROVIDER=openai|gemini`); prompts + JSON-schema outputs versioned in the function; responses Zod-validated; failures → typed error → app falls back to manual entry.
-- Consent enforced server-side (SECURITY §6,7). Cost control: image downscaled client-side (max ~1280px), per-user daily call quota in the function.
-- Decision on the initial provider is **deferred to M12** (compare accuracy/cost on Greek dishes then).
-
-## 8. Health platforms
-
-- iOS: HealthKit via a maintained Expo-compatible module (final lib pick at M11); read-only: steps, active energy, workouts, body mass. Requires Apple Developer account + entitlement.
-- Android: Health Connect (`react-native-health-connect` or equivalent, pick at M11); same types; requires Health Connect app/OS 14+ path documented.
-- Both behind `HealthDataProvider`; dedup rules in DATA_MODEL §5. No writes to health platforms initially.
-
-## 9. Barcode scanning
-
-`expo-camera` barcode scanning (EAN-13/EAN-8/UPC-A/UPC-E/QR) wrapped in a `BarcodeScanner` adapter. Requires a dev build (not Expo Go). Torch toggle, haptic on hit, manual barcode entry fallback.
-
-## 10. Accounts / credentials checklist (who must create what)
-
-**Personal-use note:** the app is for personal use, not commercial distribution — no store accounts are required.
-
-| Item | Needed by | Owner action |
+| Item | Needed by | Notes |
 |---|---|---|
-| Supabase project (URL + anon key) | M2 | create free project |
-| USDA FDC API key | M5 | free signup, set as function secret |
-| OFF User-Agent contact email | M5 | decide contact address |
-| OpenAI **or** Gemini API key | M12 | create, set as function secret |
-| Apple ID (free personal team) | M11 (HealthKit dev builds), sideloading | free; builds re-sign every 7 days. Paid $99/yr program only if 7-day re-signing becomes annoying (optional) |
-| ~~Google Play Console~~ | not needed | personal APK installs directly |
-| Expo/EAS account | M1 (dev builds) | free tier |
+| — nothing — | M2–M10, M13, M14 | zero accounts, zero keys |
+| Free Apple ID (personal team) | M6/M11 dev builds on a real iPhone | already have; 7-day re-sign |
+| OFF User-Agent contact email | M6 | just a string in the request header, no signup |
+| OpenAI **or** Gemini key | M12 only, optional | user-supplied, runtime-entered; milestone can be skipped |

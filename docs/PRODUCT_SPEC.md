@@ -4,9 +4,9 @@ Status: Phase 1 specification. Normative for all milestones; changes require upd
 
 ## 1. Product summary
 
-An original, premium-feeling nutrition and lifestyle tracker for iOS and Android. Users log food, water, exercise, steps, weight, mood, and fasting; get a personalized calorie/macro target; search foods from multiple databases or scan barcodes; photograph meals for AI-assisted estimation; plan meals and groceries; and track long-term progress — in Greek or English, offline-friendly, with transparent, non-judgmental scoring and no medical claims.
+An original, premium-feeling nutrition and lifestyle tracker for iOS and Android — **personal, single-user, local-first**. Users log food, water, exercise, steps, weight, mood, and fasting; get a personalized calorie/macro target; search foods locally (plus optional Open Food Facts online lookup) or scan barcodes; optionally photograph meals for AI-assisted estimation; plan meals and groceries; and track long-term progress — in Greek or English, fully offline, with transparent, non-judgmental scoring and no medical claims. All data lives in the on-device SQLite database.
 
-**Non-goals (current stages):** ads, subscriptions/paywall, social features, imperial units (architecture supports adding them later), web client, coaching/chat.
+**Non-goals (permanent):** user accounts, authentication, any backend/cloud sync, subscriptions/payments, ads, third-party telemetry, store distribution, social features. **Non-goals (current stages):** imperial units (architecture supports adding them later), web client, coaching/chat.
 
 ## 2. Platforms, locales, accessibility
 
@@ -25,7 +25,7 @@ Bottom tabs: **Today · Diary · Progress · Plans · Profile**
 - **Diary:** the day view — meal sections, water, exercise, steps, weight, mood, notes; date navigation.
 - **Progress:** charts and analytics (weight, calories, macros, micros, water, steps, exercise, fasting, mood, adherence).
 - **Plans:** recipes, weekly meal planning, grocery lists, fasting plans.
-- **Profile:** account, goals, reminders, preferences, privacy, data export/deletion, about/disclaimers.
+- **Profile:** personal profile & goals, reminders, preferences, privacy, data export/backup/wipe, about/disclaimers.
 
 Modal flows (not tabs): onboarding, food search/logging, barcode scan, photo analysis, recipe editor, entry editors.
 
@@ -63,7 +63,7 @@ A diary day (local date) contains ordered sections:
 
 Capabilities: rename meal sections; reorder sections; hide unused sections; copy a meal (or whole day) from another date; log for past and **future** dates; edit and delete entries; **undo** (snackbar undo for destructive actions, 6 s window); favorites; user-defined meal templates ("My meals"); per-weekday calorie targets; header always shows consumed / burned / remaining / target.
 
-**Offline:** the diary is fully functional offline (read + write) via a local store with background sync (see ARCHITECTURE §6). Sync conflicts never lose user entries.
+**Offline:** the diary is fully functional offline (read + write) — SQLite on the device is the authoritative store; there is no sync and nothing to conflict with (ARCHITECTURE §5, §7).
 
 ## 7. Food tracking (F4)
 
@@ -75,22 +75,22 @@ Nutrient panel (when data exists): energy, protein, carbs, fat, saturated fat, m
 
 Canonical nutrient model: all providers map into one normalized structure per 100 g/ml (see DATA_MODEL §4). Every food records source, external ID, last sync date, and a data-quality level (verified / complete / partial / user-entered). Conflicting sources are **never merged silently**: the app shows which source is used and lets the user pick another match or correct values (corrections stored as user overrides, original preserved).
 
-Offline: recently used and favorited foods are cached locally and loggable offline.
+Offline: the entire local catalog (Greek DB, custom foods, anything previously looked up) is loggable offline — always.
 
 ## 8. External food data (F5)
 
-Providers behind a common `FoodDataProvider` interface, called via a server-side gateway (Edge Function) so keys stay server-side:
-- **Open Food Facts** — packaged foods, barcode lookup (no key; ODbL attribution honored).
-- **USDA FoodData Central** — generic foods, rich nutrients (free API key, server-side).
-- **Local Greek food & recipe DB** — curated, originally authored or appropriately licensed; seeded via migrations/seed scripts.
+Providers behind a common `FoodDataProvider` interface; no keys, no accounts, no proxy server:
+- **Local Greek food & recipe DB** — the primary source; curated, originally authored; shipped as seed migrations.
+- **Open Food Facts** — optional online lookup for unknown barcodes and packaged-food text search (keyless; ODbL attribution honored); every hit is cached into the local DB so it works offline afterwards.
+- USDA FoodData Central is deferred (needs a key) and only reconsidered if coverage proves insufficient.
 
 Details, licensing, and mapping tables: `docs/API_AND_DATA_SOURCES.md`.
 
-## 9. AI meal photo analysis (F6)
+## 9. AI meal photo analysis (F6 — OPTIONAL feature)
 
-Flow: photograph/pick image → upload to a server-side Edge Function → vision provider (behind `VisionProvider` interface; OpenAI/Gemini/other swappable) → structured result: detected items, estimated portion per item, estimated nutrients, **confidence score per item and overall**.
+Optional and off by default: it activates only if the user enters their **own** vision API key (OpenAI or Gemini) in settings (stored in expo-secure-store). Flow: photograph/pick image → EXIF-strip + downscale on device → direct TLS call to the provider (behind the `VisionProvider` interface, swappable) → structured result: detected items, estimated portion per item, estimated nutrients, **confidence score per item and overall**.
 
-Rules: user can edit every item and quantity; nothing is saved without explicit confirmation; the result screen labels values as **estimates** and never claims medical/nutritional exactness; the image is retained only if the user has opted in (Profile → Privacy → image retention), otherwise deleted after analysis; low-confidence results show a prominent "check these values" hint. Provider prompt/response contracts validated with Zod; provider errors degrade to manual entry gracefully.
+Rules: user can edit every item and quantity; nothing is saved without explicit confirmation; the result screen labels values as **estimates** and never claims medical/nutritional exactness; the image is retained only if the user has opted in, otherwise discarded after analysis; low-confidence results show a prominent "check these values" hint. Provider response contracts validated with Zod; provider errors degrade to manual entry gracefully. Without a key the feature is hidden — no external account is ever requested.
 
 ## 10. Food quality score (F7)
 
@@ -128,13 +128,14 @@ History: at least 2 years navigable without performance collapse (aggregation ta
 
 Configurable local reminders: per-meal logging, water (interval-based within waking hours), weigh-in (chosen days/time), fasting start/end, weekly goal review, end-of-day incomplete-diary nudge. All off by default except ones the user enables during onboarding. Tone rules: factual and kind; **never** shaming, guilt-inducing, streak-threatening, or manipulative. Quiet hours respected. Copy reviewed against a checklist in the i18n files.
 
-## 16. Account, privacy & data control (F13)
+## 16. Privacy & data control (F13) — no accounts, all local
 
-- Auth: email+password with verification and password reset (Supabase Auth). Apple and Google sign-in supported by the architecture from day one (same Supabase user model), enabled in a later milestone.
-- Consents (individually toggleable, timestamped, versioned): analytics/telemetry (off by default), AI photo processing, AI image retention, health-platform read access per data type.
-- Data export: user-triggered, generates CSV + JSON bundle of all their data.
-- Account deletion: in-app, two-step confirmation, deletes auth user + all rows + storage objects; irreversible and stated so.
-- Sensitive-data stance: weight, food, mood, activity, and health data are treated as sensitive personal information — RLS-isolated per user, TLS in transit, no third-party sharing, no ad SDKs. Details: `docs/SECURITY_AND_PRIVACY.md`.
+- **No authentication, no accounts, no cloud.** All data lives in the on-device SQLite database.
+- Permissions/consents (individually toggleable): AI photo processing + image retention (only if M12 is ever enabled), health-platform read access per data type, camera for scanning.
+- Data export: user-triggered CSV + JSON of all data via the OS share sheet.
+- Backup & restore: copy the database file out / restore it, with schema-version check.
+- Data wipe: in-app, two-step confirmation, deletes the database, preferences, and any stored key; irreversible and stated so.
+- Sensitive-data stance: weight, food, mood, activity, and health data are sensitive personal information even on-device — nothing leaves the device except the optional lookups listed in `docs/SECURITY_AND_PRIVACY.md` §4; no third-party sharing, no ad SDKs, no telemetry.
 
 ## 17. Design system
 
@@ -144,5 +145,5 @@ Original visual identity: calm, minimal, premium, data-rich without clutter, usa
 
 - Cold start < 2.5 s on mid-range Android; diary interactions < 100 ms perceived.
 - Crash-free sessions ≥ 99.5% before release prep.
-- All features function without network except: food search of uncached foods, photo analysis, sync, auth.
+- All features function without network except: unknown-barcode lookup, optional online food search (OFF), optional photo analysis.
 - Zero unlocalized strings; zero unlabeled interactive elements.
